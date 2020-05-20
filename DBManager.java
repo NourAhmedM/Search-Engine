@@ -1,6 +1,7 @@
 package crawling;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.mongodb.BasicDBObject;
@@ -17,7 +18,7 @@ public class DBManager {
 
 	private DBManager()
 	{
-		MongoClient mongo = new MongoClient();
+		MongoClient mongo = new MongoClient("localhost" , 27017);
 		database=mongo.getDB("SearchEngine");
 		
 		
@@ -65,10 +66,47 @@ public class DBManager {
 	
 	
 	
+	public DBCursor getSeedSet(){
+    	DBCollection collection = database.getCollection("SeedSet");
+    	DBCursor cursor = collection.find();
+    	
+    	return cursor;
+    	
+    }
 	
+	public void UpdateOneSeed(String link,ArrayList<String> contentAndVisited){
+        DBCollection collection = database.getCollection("SeedSet");
+        
+        collection.update(new BasicDBObject("link", link),
+                new BasicDBObject
+                                  ( "link", link)
+                                  .append("ContentAndVisited", contentAndVisited)
+                      			
+                                   , true
+                                   , false);
+    }
 	
+	public void Updatelinks(String link){
+        DBCollection collection = database.getCollection("Links");
+        
+        collection.update(new BasicDBObject("link", link),
+                new BasicDBObject
+                                  ( "link", link)
+                                   , true
+                                   , false);
+    }
 	
-	
+	public void UpdatelinksAndRefernce(String link,HashSet<String> refers){
+        DBCollection collection = database.getCollection("LinksAndRefers");
+        
+        collection.update(new BasicDBObject("link", link),
+                new BasicDBObject
+                                  ( "link", link)
+                                  .append("refers", refers)
+                      			
+                                   , true
+                                   , false);
+    }
 	
 	//////////////////////////////indexer///////////////////////////////////////////////
 	
