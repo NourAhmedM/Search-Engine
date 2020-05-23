@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -9,10 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
-
-import javax.swing.text.html.HTMLDocument.Iterator;
 
 public class Relevance {
 
@@ -28,7 +23,6 @@ public class Relevance {
 	//------------------------------------------------------------------------------------------------------------------
 
 	public static wordValue tempCreatData() {
-		float tempIdf;
 		Map<Integer, List<Float> > tempTdfDictionary;
 		List<Float> priorityList;
 
@@ -54,13 +48,15 @@ public class Relevance {
 		 wordValue wordVal = new wordValue(idf, tempTdfDictionary);
 		return wordVal;
 	}
-	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//--------------------------------------- method to sort the map ---------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
 	public static List<Integer> sortMap(Map<Integer, Float> rankValues) {
 		Map<Integer, Float> unSortedMap = rankValues;
         
-		System.out.println("Unsorted Map : " + unSortedMap);
+//		System.out.println("Unsorted Map : " + unSortedMap);
 		 
-		//LinkedHashMap preserve the ordering of elements in which they are inserted
 		LinkedHashMap<Integer, Float> sortedMap = new LinkedHashMap<>();
 		 
 		unSortedMap.entrySet()
@@ -68,7 +64,7 @@ public class Relevance {
 		    .sorted(Map.Entry.comparingByValue())
 		    .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
 		 
-		System.out.println("Sorted Map   : " + sortedMap);
+//		System.out.println("Sorted Map   : " + sortedMap);
 		
 		List<Integer> sortedList = new ArrayList();
 		for (Entry<Integer, Float> entry : sortedMap.entrySet())
@@ -77,12 +73,12 @@ public class Relevance {
 		}
 		return sortedList;
 	}
-	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//---------------------------------------- the ranking algorithm ---------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
 	public List<Integer> ranker(Map<String, wordValue> wordsDictionary) { // return type may change to list of strings if url is used
 		Map<Integer, Float> rankValues = new Hashtable<Integer, Float>();    //if we used url instead of index this will be <string, float>
-//		List<Map<Integer, Float>> allRankValues = new ArrayList();
-//		List<Integer> indices = new ArrayList();               //if we used url instead of index this will be string
-//		List<Float> rankVals = new ArrayList();
 		wordValue wordVal;
 		float idf;
 		Map<Integer, List<Float> > tdfDictionary;
@@ -90,9 +86,6 @@ public class Relevance {
 		int index;
 		float tf;
 		float tf_idf;
-//		Hashtable<Integer, Float> allIndices = new Hashtable<Integer, Float>();
-
-//		Map<Integer, Float> allIndices = new HashMap<Integer, Float>();
 		for(int i = 0; i < this.size; i++)  // loop on every word in the query
 		{
 			wordVal = wordsDictionary.get(words[i]);
@@ -122,6 +115,10 @@ public class Relevance {
 		return rankedIndices;
 	}
 	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//------------------------------- calculating the relevance value --------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
 	public float rank(float TF, float IDF) { // fore now just tf/idf
 		if (TF > 0.5)
 			return 0;
@@ -129,6 +126,10 @@ public class Relevance {
 		return IDF_log*TF;
 	}
 	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//------------------------------------ main function for testing ---------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
 	 public static void main(String[] args) {
 		wordValue w = tempCreatData();
 		w.print();
@@ -161,13 +162,6 @@ public class Relevance {
 			}
 		}
 		sortMap(test);
-//		for (Entry<Integer, Integer> entry : test.entrySet())
-//		{
-//			System.out.println("index : " 
-//	                 + entry.getKey());			
-//			 System.out.println("value: "
-//	    	                 + entry.getValue());
-//		}
 		
 	 }
 }
