@@ -23,6 +23,10 @@ public class Relevance {
 		this.size = words.length;
 	}
 	
+	//------------------------------------------------------------------------------------------------------------------
+	//------------------------------- creating temp data for testing ---------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
+
 	public static wordValue tempCreatData() {
 		float tempIdf;
 		Map<Integer, List<Float> > tempTdfDictionary;
@@ -51,10 +55,32 @@ public class Relevance {
 		return wordVal;
 	}
 	
+	public static List<Integer> sortMap(Map<Integer, Float> rankValues) {
+		Map<Integer, Float> unSortedMap = rankValues;
+        
+		System.out.println("Unsorted Map : " + unSortedMap);
+		 
+		//LinkedHashMap preserve the ordering of elements in which they are inserted
+		LinkedHashMap<Integer, Float> sortedMap = new LinkedHashMap<>();
+		 
+		unSortedMap.entrySet()
+		    .stream()
+		    .sorted(Map.Entry.comparingByValue())
+		    .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
+		 
+		System.out.println("Sorted Map   : " + sortedMap);
+		
+		List<Integer> sortedList = new ArrayList();
+		for (Entry<Integer, Float> entry : sortedMap.entrySet())
+		{
+			sortedList.add(entry.getKey());
+		}
+		return sortedList;
+	}
 	
 	public List<Integer> ranker(Map<String, wordValue> wordsDictionary) { // return type may change to list of strings if url is used
-		Map<Integer, Float> rankValues = new TreeMap<Integer, Float>();    //if we used url instead of index this will be <string, float>
-		List<Map<Integer, Float>> allRankValues = new ArrayList();
+		Map<Integer, Float> rankValues = new Hashtable<Integer, Float>();    //if we used url instead of index this will be <string, float>
+//		List<Map<Integer, Float>> allRankValues = new ArrayList();
 //		List<Integer> indices = new ArrayList();               //if we used url instead of index this will be string
 //		List<Float> rankVals = new ArrayList();
 		wordValue wordVal;
@@ -64,7 +90,7 @@ public class Relevance {
 		int index;
 		float tf;
 		float tf_idf;
-		Hashtable<Integer, Float> allIndices = new Hashtable<Integer, Float>();
+//		Hashtable<Integer, Float> allIndices = new Hashtable<Integer, Float>();
 
 //		Map<Integer, Float> allIndices = new HashMap<Integer, Float>();
 		for(int i = 0; i < this.size; i++)  // loop on every word in the query
@@ -91,8 +117,9 @@ public class Relevance {
 				}
 			}
 		}
-		
-		return null;
+		List<Integer> rankedIndices = new ArrayList();
+		rankedIndices = sortMap(rankValues);
+		return rankedIndices;
 	}
 	
 	public float rank(float TF, float IDF) { // fore now just tf/idf
@@ -120,26 +147,27 @@ public class Relevance {
 		wordsDictionary.put("Geeks", w);
 		
 		int[] vals= {1, 5, 2, 4, 5, 1, 1};
-		Map<Integer, Integer> test = new HashMap<Integer, Integer>();
+		Map<Integer, Float> test = new HashMap<Integer, Float>();
 		for(int i=0; i<7; i++) {
 			if(test.get(vals[i]) == null)
 			{
-				test.put(vals[i], i);
+				test.put(vals[i], (float)i);
 			}
 			else
 			{
-				int tempo = test.get(vals[i]);
+				Float tempo = test.get(vals[i]);
 				test.remove(vals[i]);
-				test.put(vals[i], tempo+i);
+				test.put(vals[i], tempo+(float)i);
 			}
 		}
-		for (Entry<Integer, Integer> entry : test.entrySet())
-		{
-			System.out.println("index : " 
-	                 + entry.getKey());			
-			 System.out.println("value: "
-	    	                 + entry.getValue());
-		}
+		sortMap(test);
+//		for (Entry<Integer, Integer> entry : test.entrySet())
+//		{
+//			System.out.println("index : " 
+//	                 + entry.getKey());			
+//			 System.out.println("value: "
+//	    	                 + entry.getValue());
+//		}
 		
 	 }
 }
