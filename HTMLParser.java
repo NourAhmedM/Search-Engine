@@ -55,8 +55,8 @@ public class HTMLParser{
 	{
 		List<String> result   = new ArrayList<String>();
 		String[] arr = str.split(" ");   
-		System.out.println("result : " 
-                + str);
+		/*System.out.println("result : " 
+                + str);*/
 		for ( String s : arr) {
 			result.add(s);
 		}

@@ -9,6 +9,8 @@ public class wordValue
 	{
 	public float idf;
 	public Map<Integer, List<Float> > tdfDictionary;
+	public wordValue()
+	{}
 	public wordValue(float idf, Map<Integer, List<Float> > tdfDic)
 	{
 	this.idf = idf;

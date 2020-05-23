@@ -14,7 +14,6 @@ import javax.swing.text.html.HTML;
 
 public class Indexer 
 {
-//get the documents out of the URLS
     private Map<Integer, String> documentsURLs;
     private Map<Integer, Set<String> > documentsDictionary;
     private Map<String, wordValue> wordsDictionary;
@@ -24,6 +23,7 @@ public class Indexer
     {
     	documentsURLs = new LinkedHashMap<Integer, String>();
     	wordsDictionary = new LinkedHashMap<String, wordValue>();
+    	documentsDictionary = new LinkedHashMap<Integer,  Set<String> >();
     	
     }
     public static void main(String args[]) throws IOException
@@ -32,19 +32,21 @@ public class Indexer
 		indexer  = new Indexer();
     	indexer.getDocumentsURLs();
     	indexer.Indexing(indexer.documentsURLs);
-    	for (Map.Entry<String, wordValue>  entry : indexer.wordsDictionary .entrySet())
+    	wordValue entry;
+    	entry = indexer.wordsDictionary.get("significant");
+    	/*for (Map.Entry<String, wordValue>  entry : indexer.wordsDictionary .entrySet())
 		 {	
    		 System.out.println("word : " 
                     + entry.getKey());
-   		 System.out.println("word value : ");
-         entry.getValue().print();
-  	     }
+   		 System.out.println("word value : ");*/
+         entry.print();//.getValue().print();
+    //}
     }
 	 public void getDocumentsURLs() throws IOException 
 	 {
-	        /* TODO : GET Documents URLS From DB */
+	       
 	    	File file = new File("assets/urls.txt");   
-	    	Scanner sc = new Scanner(file , "UTF-8");     //file to be scanned
+	    	Scanner sc = new Scanner(file , "UTF-8");     
 	    	int temp = 0;  
 	    	
 	    	while(sc.hasNextLine())  
@@ -58,11 +60,10 @@ public class Indexer
 	 void Indexing(  Map<Integer, String> documentsURLs)
 	 
 	 {
-		 
 		 for (Map.Entry<Integer, String> entry : documentsURLs.entrySet())
 		 {
-			 System.out.println("url : " 
-                     + entry.getValue());
+			 /*System.out.println("url : " 
+                     + entry.getValue());*/
 			 htmlDoc = new HTMLParser(entry.getValue());
 			List <String> header = htmlDoc.get_header1();
 			List <String> title = htmlDoc.get_title();
@@ -80,15 +81,9 @@ public class Indexer
 	        Integer titleCount  = 0;
 	        Integer bodyCount  = 0;
 	        Integer fullTextCount  = 0;
-	        System.out.println("title : " 
-                    + titleSet);
-	        System.out.println("body : " 
-                    + bodySet);
-	        System.out.println("header : " 
-                    + headerSet);
-			 List<String>wordList = htmlDoc.get_fullText();
-			 System.out.println("word : " 
-                     + wordList.get(1));
+			List<String>wordList = htmlDoc.get_fullText();
+		
+			documentsDictionary.put(entry.getKey(), fullTextSet);
 			 for (String word : fullTextSet) 
 				{
 				
@@ -98,11 +93,14 @@ public class Indexer
 				     headerCount = Collections.frequency(header,word);
 					 titleCount = Collections.frequency(title,word);
 					 bodyCount = Collections.frequency(body,word) - headerCount;
-					 System.out.println("counts : " 
-			                    + headerCount+","+titleCount+","+ bodyCount);
+					 /*System.out.println("counts : " 
+			                    + headerCount+","+titleCount+","+ bodyCount);*/
 					 /////
-					 float idf = 0;//getIdf(documentsURLs,word);
-					 float tdf =  0;//getTDF(entry.getValue(), word);
+					 float idf = 1;//getIdf(documentsURLs,word);
+					 Integer totalSize = fullText.size();
+					 Integer occurrences = Collections.frequency(fullText,word);
+					 float tdf = occurrences/ totalSize;
+					// float tdf =  0;//getTDF(entry.getValue(), word);
 					 ////	 
 					 priorityList = new ArrayList();
 					 priorityList.add(tdf);
@@ -123,9 +121,11 @@ public class Indexer
 					else 
 					{
 						wordVal = wordsDictionary.get(word);
+						idf = wordVal.idf ;
 						dataOfEachUrl = wordVal.tdfDictionary;
 						dataOfEachUrl.put(entry.getKey(), priorityList);
-						wordVal = new wordValue(idf, dataOfEachUrl);
+						wordVal.idf = idf+1;// = new wordValue(idf, dataOfEachUrl);
+						wordVal.tdfDictionary = dataOfEachUrl;
 						wordsDictionary.replace(word, wordVal);
 					
 					}
@@ -155,9 +155,7 @@ public class Indexer
 		 HTMLParser htmlDoc  ;
 		 htmlDoc = new HTMLParser(url);
 		 Integer totalSize = htmlDoc.get_fullText().size();
-		 int occurrences = Collections.frequency(htmlDoc.get_fullText(),word);
-		 
-		 return occurrences/ totalSize;
-		 
+		 int occurrences = Collections.frequency(htmlDoc.get_fullText(),word);		 
+		 return occurrences/ totalSize; 
 	 }
 }

@@ -38,7 +38,7 @@ public final class StopWordsRemover {
     	ArrayList<String> allWords = 
           Stream.of(data.split(" "))
                 .collect(Collectors.toCollection(ArrayList<String>::new));
-    	stopwords.add(" ");
+    	//stopwords.add(" ");
         allWords.removeAll(stopwords);
         return allWords.stream().collect(Collectors.joining(" "));
     }
