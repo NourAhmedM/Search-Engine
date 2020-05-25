@@ -3,12 +3,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.io.File;
-import java.io.FileNotFoundException;
 
-import org.jsoup.Jsoup;
 
 
 public class QueryProcessor {
@@ -59,10 +54,15 @@ public class QueryProcessor {
 	
 	public void runRanker(Map<String, wordValue> wordsDictionary) {
 		getDocuments(wordsDictionary);
-		List<Integer> rankedIndicies;
-		Relevance r = new Relevance();
-		rankedIndicies = r.ranker(this.wordsDictionary);
-		System.out.println(rankedIndicies); 
+		if(this.wordsDictionary.isEmpty()) {
+			System.out.println("no result"); 
+		}
+		else {
+			List<Integer> rankedIndicies;
+			Relevance r = new Relevance();
+			rankedIndicies = r.ranker(this.wordsDictionary);
+			System.out.println(rankedIndicies); 
+		}
 	}
 	
 	public static void main(String[] args) throws IOException {
@@ -72,10 +72,9 @@ public class QueryProcessor {
     	indexer.getDocumentsURLs();
     	indexer.Indexing(indexer.documentsURLs);
     	
-		String s = "uploaded results golden halfed energy";
+		String s = "uploaded results golden halfed energy parameters methods";
 		QueryProcessor qp = new QueryProcessor(s, indexer.documentsURLs);
 		List<String> q = qp.query;
-//		qp.getDataFromDatabase();
 		for(int i = 0; i < q.size(); i++) {
 			System.out.println(q.get(i)); 
 		}

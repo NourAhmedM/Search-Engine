@@ -32,13 +32,13 @@ public class Relevance {
 		 float tdf = ThreadLocalRandom.current().nextFloat();
 //		 System.out.println("the 2nd random float number is "+tdf);
 		
-		 priorityList = new ArrayList();
+		 priorityList = new ArrayList<Float>();
 		 priorityList.add(tdf);
 		 priorityList.add((float)titleCount); 
 		 priorityList.add((float)headerCount);
 		 priorityList.add((float)bodyCount);
 		 
-		 tempTdfDictionary = new LinkedHashMap() ;
+		 tempTdfDictionary = new LinkedHashMap<Integer, List<Float>>() ;
 		 tempTdfDictionary.put(1, priorityList);
 
 		 wordValue wordVal = new wordValue(idf, tempTdfDictionary);
@@ -62,7 +62,7 @@ public class Relevance {
 		 
 //		System.out.println("Sorted Map   : " + sortedMap);
 		
-		List<Integer> sortedList = new ArrayList();
+		List<Integer> sortedList = new ArrayList<Integer>();
 		for (Entry<Integer, Float> entry : sortedMap.entrySet())
 		{
 			sortedList.add(entry.getKey());
@@ -82,9 +82,12 @@ public class Relevance {
 		int index;
 		float tf;
 		float tf_idf;
-		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet())
+		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet()) // iterate on each word
 		{
 			wordVal = wordsDictionary.get(entry2.getKey());
+			System.out.println("");
+			System.out.println("the word: "+entry2.getKey()+" has word value:");
+			wordVal.print();
 			idf = wordVal.idf;
 			tdfDictionary = wordVal.tdfDictionary;
 			for (Entry<Integer, List<Float>> entry : tdfDictionary.entrySet())  // iterate on priority list
@@ -92,7 +95,8 @@ public class Relevance {
 				index = entry.getKey();
 				priorityList = entry.getValue();
 				tf = priorityList.get(0);
-				tf_idf = rank(tf, idf);
+//				tf_idf = rank(tf, idf);         // uncomment this
+				tf_idf = priorityList.get(3);   // and comment this
 				//this may change to be url instead of index
 				if(rankValues.get(index) == null)  // if index is not in the map add it
 				{
@@ -106,7 +110,7 @@ public class Relevance {
 				}
 			}
 		}
-		List<Integer> rankedIndices = new ArrayList();
+		List<Integer> rankedIndices = new ArrayList<Integer>();
 		rankedIndices = sortMap(rankValues);
 		return rankedIndices;
 	}
