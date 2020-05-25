@@ -14,9 +14,9 @@ import javax.swing.text.html.HTML;
 
 public class Indexer 
 {
-    private Map<Integer, String> documentsURLs;
+    public Map<Integer, String> documentsURLs;
     private Map<Integer, Set<String> > documentsDictionary;
-    private Map<String, wordValue> wordsDictionary;
+    public Map<String, wordValue> wordsDictionary;
     HTMLParser htmlDoc ;
     
     public Indexer()

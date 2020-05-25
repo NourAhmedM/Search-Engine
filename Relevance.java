@@ -11,11 +11,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Relevance {
 
-	String[] words;
+	List<String> words;
 	int size;
-	public Relevance (String[] words) {
+	public Relevance (List<String> words) {
 		this.words = words;
-		this.size = words.length;
+		this.size = words.size();
 	}
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -31,10 +31,10 @@ public class Relevance {
 		int bodyCount = ThreadLocalRandom.current().nextInt(0, 10);
 
 		 float idf = ThreadLocalRandom.current().nextFloat();
-		 System.out.println("the random float number is "+idf);
+//		 System.out.println("the random float number is "+idf);
 		 
 		 float tdf = ThreadLocalRandom.current().nextFloat();
-		 System.out.println("the 2nd random float number is "+tdf);
+//		 System.out.println("the 2nd random float number is "+tdf);
 		
 		 priorityList = new ArrayList();
 		 priorityList.add(tdf);
@@ -88,7 +88,7 @@ public class Relevance {
 		float tf_idf;
 		for(int i = 0; i < this.size; i++)  // loop on every word in the query
 		{
-			wordVal = wordsDictionary.get(words[i]);
+			wordVal = wordsDictionary.get(words.get(i));
 			idf = wordVal.idf;
 			tdfDictionary = wordVal.tdfDictionary;
 			for (Entry<Integer, List<Float>> entry : tdfDictionary.entrySet())  // iterate on priority list
