@@ -24,6 +24,7 @@ public class wordValue
     {
 		 System.out.println("idf: " 
                  + idf);
+		 
 		 for (Map.Entry <Integer, List<Float> > entry :tdfDictionary .entrySet())
 		 {
 			 System.out.println("url index : " 

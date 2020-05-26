@@ -36,16 +36,12 @@ public class HTMLParser{
             doc = Jsoup.connect(url).get();
             fullText = doc.text();
             fullText = remover.setup(fullText);
-            fullText = stemmer.stemTerm(fullText);
             title = doc.title();
             title = remover.setup(title);
-            title = stemmer.stemTerm(title);
             header1 = doc.body().getElementsByTag("h1").text();
             header1 = remover.setup(header1);
-            header1 = stemmer.stemTerm(header1);
             body = doc.body().text();
             body = remover.setup(body);
-            body = stemmer.stemTerm(body);
 
         } catch (IOException e) {
             
@@ -58,6 +54,7 @@ public class HTMLParser{
 		/*System.out.println("result : " 
                 + str);*/
 		for ( String s : arr) {
+            s = stemmer.stemTerm(s);
 			result.add(s);
 		}
 		

@@ -60,7 +60,7 @@ class Stemmer
     {
 		Stemmer stemmer =  new Stemmer();	
       System.out.println("Jsoup Can read HTML page from URL, title : " 
-                                     + stemmer.stemTerm("riding"));
+                                     + stemmer.stemTerm("computations"));
      
     }
 	    

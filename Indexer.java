@@ -33,14 +33,16 @@ public class Indexer
     	indexer.getDocumentsURLs();
     	indexer.Indexing(indexer.documentsURLs);
     	wordValue entry;
-    	entry = indexer.wordsDictionary.get("significant");
+    	entry = indexer.wordsDictionary.get("home");
+    	entry.print();
     	/*for (Map.Entry<String, wordValue>  entry : indexer.wordsDictionary .entrySet())
 		 {	
    		 System.out.println("word : " 
                     + entry.getKey());
-   		 System.out.println("word value : ");*/
-         entry.print();//.getValue().print();
-    //}
+   		 
+   		 System.out.println("word value : ");
+         entry.getValue().print();
+        }*/
     }
 	 public void getDocumentsURLs() throws IOException 
 	 {
@@ -60,6 +62,8 @@ public class Indexer
 	 void Indexing(  Map<Integer, String> documentsURLs)
 	 
 	 {
+		 Integer totalSize = documentsURLs.size();
+		 
 		 for (Map.Entry<Integer, String> entry : documentsURLs.entrySet())
 		 {
 			 /*System.out.println("url : " 
@@ -82,7 +86,6 @@ public class Indexer
 	        Integer bodyCount  = 0;
 	        Integer fullTextCount  = 0;
 			List<String>wordList = htmlDoc.get_fullText();
-		
 			documentsDictionary.put(entry.getKey(), fullTextSet);
 			 for (String word : fullTextSet) 
 				{
@@ -97,9 +100,13 @@ public class Indexer
 			                    + headerCount+","+titleCount+","+ bodyCount);*/
 					 /////
 					 float idf = 1;//getIdf(documentsURLs,word);
-					 Integer totalSize = fullText.size();
-					 Integer occurrences = Collections.frequency(fullText,word);
-					 float tdf = occurrences/ totalSize;
+					 int docSize = fullText.size();
+					 int occurrences = Collections.frequency(fullText,word);
+					 float tdf = (float)occurrences/ (float)docSize;
+					 /*System.out.println("occurrences : " 
+			                    + occurrences);
+					 System.out.println("docSize : " 
+			                    + docSize);*/
 					// float tdf =  0;//getTDF(entry.getValue(), word);
 					 ////	 
 					 priorityList = new ArrayList();
@@ -114,17 +121,17 @@ public class Indexer
 					 dataOfEachUrl = new LinkedHashMap() ;
 					 dataOfEachUrl.put(entry.getKey(), priorityList);
 					 ////
-					 wordVal = new wordValue(idf, dataOfEachUrl);
+					 wordVal = new wordValue(idf/totalSize, dataOfEachUrl);
 					 ////
 					 wordsDictionary.put(word, wordVal);
 					}
 					else 
 					{
 						wordVal = wordsDictionary.get(word);
-						idf = wordVal.idf ;
+						idf = wordVal.idf * totalSize ;
 						dataOfEachUrl = wordVal.tdfDictionary;
 						dataOfEachUrl.put(entry.getKey(), priorityList);
-						wordVal.idf = idf+1;// = new wordValue(idf, dataOfEachUrl);
+						wordVal.idf = (idf+1)/totalSize;// = new wordValue(idf, dataOfEachUrl);
 						wordVal.tdfDictionary = dataOfEachUrl;
 						wordsDictionary.replace(word, wordVal);
 					
