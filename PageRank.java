@@ -1,27 +1,109 @@
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class PageRank {
  
+ public static int[][] graph;
+ public static int size;
+ public Map<Integer, String> documentsURLs;
  
- static void fillGraph(int size, int[][] graph) {           // modify this to the real matrix
-	 int count = 0;
-	 int[] data = {0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0};
-	 for(int i = 0; i < size; i++)
+ 
+ public static Map<String, ArrayList<String>> dumDataURLs() {
+	 Map<String, ArrayList<String>> URLs2 = new HashMap<String, ArrayList<String>>();
+	 ArrayList<String> temp = new ArrayList();
+	 
+	 temp.add("s2");
+	 temp.add("s3");
+	 temp.add("s5");
+	 URLs2.put("s1", temp);
+
+	 temp = new ArrayList();
+	 
+	 temp.add("s3");
+	 temp.add("s5");
+	 URLs2.put("s2", temp);
+
+	 temp = new ArrayList();
+	 
+	 temp.add("s4");
+	 URLs2.put("s3", temp);
+
+	 temp = new ArrayList();
+	 
+	 temp.add("s5");
+	 URLs2.put("s4", temp);
+
+	 return URLs2;
+ }
+ public static Map<Integer, String> dumDataDocument() {
+	 Map<Integer, String> documentsURLs2 = new HashMap<Integer, String>();
+	 String[] str = {"s1", "s2", "s3", "s4", "s5"};
+	 for(int i = 0; i < 5; i++)
 	 {
-		 for(int j = 0; j < size; j++)
+		 documentsURLs2.put(i, str[i]);
+	 }
+
+	 return documentsURLs2;
+ }
+ public PageRank(Map<String, ArrayList<String>> URLs, Map<Integer, String> documentsURLs){
+	 this.documentsURLs = documentsURLs;
+	 size = documentsURLs.size();
+	 graph = new int[size][size];
+	 fillGraph(URLs, documentsURLs);
+ }
+ 
+ //uncomment this function
+ 
+// public static HashMap<String,ArrayList<String>> readLinks() {
+//		HashMap<String,ArrayList<String>>LinksAndRefers=new HashMap<String,ArrayList<String>>();
+//		DBManager db = DBManager.getinstance();
+//		DBCollection seedsCollection = db.getLinksAndRefers().getCollection();
+//		Iterator<DBObject> objects = seedsCollection.find().iterator();
+//		while (objects.hasNext()) {
+//			Map oneLink = objects.next().toMap();
+//
+//			String link = (String) oneLink.get("link");
+//			ArrayList<String> cont_visit = (ArrayList<String>) oneLink.get("refers");
+//
+//			LinksAndRefers.put(link, cont_visit);
+//		}
+//		return LinksAndRefers;
+//	}
+ 
+ // this function swap the key and the value for the map
+ static Map<String, Integer> swapKeyValue(Map<Integer, String> documentsURLs){
+	Map<String, Integer> documentsIndices = new LinkedHashMap<String, Integer>();
+	
+	for (Entry<Integer, String> entry : documentsURLs.entrySet())
+		documentsIndices.put(entry.getValue(), entry.getKey());
+	
+	return documentsIndices;
+ }
+ 
+ // this function fills the graph with numbers corresponding to the URLs
+ static void fillGraph(Map<String, ArrayList<String>> URLs, Map<Integer, String> documentsURLs) {
+	 Map<String, Integer> documentsIndices = swapKeyValue(documentsURLs);
+	 List<String> refere;
+	 for (Entry<String, ArrayList<String>> entry : URLs.entrySet()) {
+		 refere = entry.getValue();
+		 for(int i = 0; i < refere.size(); i++)
 		 {
-			 graph[i][j] = data[count];
-			 count++;
-//			 if(i == j)
-//				 graph[i][j] = 0; //to solve the problem of link nt pointing to anything for now
-//			 else if(j % 2 == 0 && (i != 1 || i != 2))
-//				 graph[i][j] = 1;
-//			 else
-//				 graph[i][j] = 0;
+			 graph[documentsIndices.get(refere.get(i))][documentsIndices.get(entry.getKey())] = 1;
 		 }
 	 }
  }
- 
- static void normalize(float[] rank) {   
+
+
+static void normalize(float[] rank) {   
 	 float sum = 0;
 	 for(int i = 0; i < rank.length; i++)
 		 sum += rank[i];
@@ -31,50 +113,57 @@ public class PageRank {
  }
  
  public static void main(String[] args) {
-	 int[][] graph = new int[5][5];
-	 float[] rank0, rank1;
-	 int[] L = new int[5];
+//	 HashMap<String,ArrayList<String>> urls = readLinks(); //getting the urls and the refered urls from the database
+	 Map<String, ArrayList<String>> URLs = new HashMap<String, ArrayList<String>>();
+	 Map<Integer, String> documentsURLs = new HashMap<Integer, String>();
+	 //----------------------- dum data ----------------------------------------
+	 documentsURLs = dumDataDocument();
+	 URLs = dumDataURLs();
+	//----------------------- dum data ----------------------------------------
+	 Map<String , Double> pagesRank = new HashMap<String , Double>();
 	 
-	 rank0 = new float[5];
-	 rank1 = new float[5];
+	 PageRank p = new PageRank(URLs, documentsURLs);
+	 double[] rank0, rank1;
+	 int[] L = new int[p.size];
 	 
-	 fillGraph(5,graph);
+	 rank0 = new double[p.size];
+	 rank1 = new double[p.size];
 	 
 	 
-	 for(int i = 0; i < rank0.length; i++)
+	 for(int i = 0; i < p.size; i++)
 	 {
 		//initial itr all ranks are equal in the 0's iteration
-		 rank0[i] = 1/(float)rank0.length;
+		 rank0[i] = 1/(double)p.size;
 		 // how many pages each page refer to "calculating the number of outgoing arrows from each page"
 		 int count = 0;
-		 for(int j = 0; j < rank0.length; j++)
+		 for(int j = 0; j < p.size; j++)
 		 {
-			 if (graph[i][j] == 1)
+			 if (p.graph[i][j] == 1)
 				 count++;
 		 }
 		 L[i] = count;
 	 }
 	 
 	 // printing the matrix
-	 for(int i = 0; i < rank0.length; i++)
+	 for(int i = 0; i < p.size; i++)
 	 {
-		 for(int j = 0; j < rank0.length; j++)
+		 for(int j = 0; j < p.size; j++)
 		 {
-			 System.out.print(graph[i][j]);
+			 System.out.print(p.graph[i][j]);
 		 }
 		 System.out.print("\n");
 	 }
 	 
-	 float lampda = 0.85f;
+	 double lampda = 0.85f;
 	 //-----------------------------------------------------------------------------------
 	 for(int i = 0; i < 6; i++)
 	 {
-		 for(int j = 0; j < rank0.length; j++)
+		 for(int j = 0; j < p.size; j++)
 		 {
-			 float pr = 0;
-			 for(int k = 0; k < rank0.length; k++)
+			 double pr = 0;
+			 for(int k = 0; k < p.size; k++)
 			 {
-				 if(graph[k][j] == 1)
+				 if(p.graph[k][j] == 1)
 				 {
 					 pr = pr + (rank0[k]/L[k]);
 				 }
@@ -87,10 +176,13 @@ public class PageRank {
 //			 normalize(rank1);
 		 rank0 = rank1;
 	 }
-	 for(int j = 0; j < rank0.length; j++)
+	 
+	 for(int j = 0; j < p.size; j++)
 	 {
 			 System.out.println(rank1[j]);
+			 pagesRank.put(p.documentsURLs.get(j), rank1[j]);
 	 }
-	 
+	 System.out.println(pagesRank);
+//	 savePagesRank(pagesRank);
 	}
 }
