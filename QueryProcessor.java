@@ -11,12 +11,23 @@ public class QueryProcessor {
 	public Map<String, wordValue> wordsDictionary;
 	public Map<Integer, String> documentsURLs;
 	
-	public QueryProcessor(String searchQuery, Map<Integer, String> documentsURLs) throws IOException {
+	// in constructor, initialize wordsDictionary and documentsURLs from database
+	public QueryProcessor(String searchQuery, Map<Integer, String> documentsURLs) throws IOException { //remove string 
 		this.query = splitAndStam(searchQuery);
 		this.documentsURLs = documentsURLs;
-    	this.wordsDictionary = new LinkedHashMap<String, wordValue>();;
+    	this.wordsDictionary = new LinkedHashMap<String, wordValue>();
 	}
 	
+	ArrayList<String> runQueryProcessor(String searchQuery) throws IOException{
+		this.query = splitAndStam(searchQuery);
+		List<Integer> rankedIndicies = runRanker(wordsDictionary);
+		ArrayList<String> rankedURLs = new ArrayList<String>();
+		for(int i = 0; i < rankedIndicies.size(); i++)
+		{
+			rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
+		}
+		return rankedURLs;
+	}
 	// method to get documents contains words in the query
 	public void getDocuments(Map<String, wordValue> wordsDictionary) { // takes map from indexer for now
 		for(int i = 0; i < query.size(); i++) {
@@ -52,17 +63,18 @@ public class QueryProcessor {
 		return queryList;
 	}
 	
-	public void runRanker(Map<String, wordValue> wordsDictionary) {
+	public List<Integer> runRanker(Map<String, wordValue> wordsDictionary) {
 		getDocuments(wordsDictionary);
 		if(this.wordsDictionary.isEmpty()) {
-			System.out.println("no result"); 
+			System.out.println("no result");
+			return null;
 		}
-		else {
-			List<Integer> rankedIndicies;
-			Relevance r = new Relevance();
-			rankedIndicies = r.ranker(this.wordsDictionary);
-			System.out.println(rankedIndicies); 
-		}
+		
+		List<Integer> rankedIndicies;
+		Relevance r = new Relevance();
+		rankedIndicies = r.ranker(this.wordsDictionary);
+		return rankedIndicies;
+		
 	}
 	
 	public static void main(String[] args) throws IOException {
@@ -78,7 +90,8 @@ public class QueryProcessor {
 		for(int i = 0; i < q.size(); i++) {
 			System.out.println(q.get(i)); 
 		}
-		qp.runRanker(indexer.wordsDictionary);
+		List<Integer> l = qp.runRanker(indexer.wordsDictionary);
+		System.out.println(l);
 		
 		
 	}
