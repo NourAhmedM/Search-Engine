@@ -116,6 +116,31 @@ public class DBManager {
                                    , false);
     }
 	
+	
+	public void savePagesRank( Map<String , Double> pagesRank){
+        DBCollection collection = database.getCollection("PageRank");
+
+        for (Map.Entry<String,Double> entry : pagesRank.entrySet()) {
+        	
+            collection.update(new BasicDBObject("link", entry.getKey()),
+                    new BasicDBObject
+                                      ( "link",  entry.getKey())
+                                      .append("rank", entry.getValue())
+                                      
+                                       , true
+                                       , false);
+           
+        
+        }
+    }
+	
+	public DBCursor getPageRanks(){
+    	DBCollection collection = database.getCollection("PageRank");
+    	DBCursor cursor = collection.find();
+    	
+    	return cursor;
+    	
+    }
 	//////////////////////////////indexer///////////////////////////////////////////////
 	
 	
