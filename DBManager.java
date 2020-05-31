@@ -74,6 +74,14 @@ public class DBManager {
     	
     }
 	
+	public DBCursor getLinksAndRefers(){
+    	DBCollection collection = database.getCollection("LinksAndRefers");
+    	DBCursor cursor = collection.find();
+    	
+    	return cursor;
+    	
+    }
+	
 	public void UpdateOneSeed(String link,ArrayList<String> contentAndVisited){
         DBCollection collection = database.getCollection("SeedSet");
         
