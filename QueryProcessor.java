@@ -10,6 +10,7 @@ public class QueryProcessor {
 	public List<String> query;
 	public Map<String, wordValue> wordsDictionary;
 	public Map<Integer, String> documentsURLs;
+	public ArrayList<String> allRankedURLs;
 	
 	// in constructor, initialize wordsDictionary and documentsURLs from database
 	public QueryProcessor(String searchQuery, Map<Integer, String> documentsURLs) throws IOException { //remove string 
@@ -18,13 +19,29 @@ public class QueryProcessor {
     	this.wordsDictionary = new LinkedHashMap<String, wordValue>();
 	}
 	
-	ArrayList<String> runQueryProcessor(String searchQuery) throws IOException{
+	// this method runs the ranker to rank all links and return the number of links found
+	int runQueryProcessor(String searchQuery) throws IOException{
 		this.query = splitAndStam(searchQuery);
 		List<Integer> rankedIndicies = runRanker(wordsDictionary);
 		ArrayList<String> rankedURLs = new ArrayList<String>();
 		for(int i = 0; i < rankedIndicies.size(); i++)
 		{
 			rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
+		}
+		allRankedURLs = rankedURLs;
+		return rankedURLs.size();
+	}
+	
+	// method to get ten links
+	ArrayList<String> getTenLinks(int index){
+		ArrayList<String> rankedURLs = new ArrayList<String>();
+		int startingIndex = (index-1)*10;
+		for(int i = 0; i < 10; i++)
+		{
+			if(allRankedURLs.get(startingIndex+i) == null)
+				break;
+			
+			rankedURLs.add(allRankedURLs.get(startingIndex+i));
 		}
 		return rankedURLs;
 	}
