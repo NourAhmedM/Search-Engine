@@ -9,11 +9,36 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.swing.text.html.HTMLDocument.Iterator;
+
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+
 public class Relevance {
 
+	public Map<Integer, String> documentsURLs; //fill it from database
+	
 	public Relevance () {
 	}
 	
+	//uncomment this function
+	
+//	public  static HashMap<String,Double> readPageRanks() {
+//		HashMap<String,Double> pageranks=new HashMap<String,Double>();
+//		DBManager db = DBManager.getinstance();
+//		DBCollection seedsCollection = db.getPageRanks().getCollection();
+//		Iterator<DBObject> objects = seedsCollection.find().iterator();
+//		while (objects.hasNext()) {
+//			Map onepage = objects.next().toMap();
+//
+//			String link = (String) onepage.get("link");
+//			Double rank = (Double) onepage.get("rank");
+//
+//			pageranks.put(link, rank);
+//
+//		}
+//		return pageranks;
+//	}
 	//------------------------------------------------------------------------------------------------------------------
 	//------------------------------- creating temp data for testing ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
@@ -48,7 +73,7 @@ public class Relevance {
 	//------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------- method to sort the map ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
-	public static List<Integer> sortMap(Map<Integer, Float> rankValues) {
+	public List<Integer> sortMap(Map<Integer, Float> rankValues) {
 		Map<Integer, Float> unSortedMap = rankValues;
         
 //		System.out.println("Unsorted Map : " + unSortedMap);
@@ -63,6 +88,7 @@ public class Relevance {
 //		System.out.println("Sorted Map   : " + sortedMap);
 		
 		List<Integer> sortedList = new ArrayList<Integer>();
+		// store the indices of the urls
 		for (Entry<Integer, Float> entry : sortedMap.entrySet())
 		{
 			sortedList.add(entry.getKey());
@@ -82,6 +108,9 @@ public class Relevance {
 		int index;
 		float tf;
 		float tf_idf;
+		double pageRank = 1;
+		String Link;
+//		HashMap<String,Double> pageRankValues = readPageRanks();
 		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet()) // iterate on each word
 		{
 			wordVal = wordsDictionary.get(entry2.getKey());
@@ -93,11 +122,12 @@ public class Relevance {
 			for (Entry<Integer, List<Float>> entry : tdfDictionary.entrySet())  // iterate on priority list
 			{
 				index = entry.getKey();
+//				Link = documentsURLs.get(index); // get the URL link
+//				pageRank = pageRankValues.get(Link);
 				priorityList = entry.getValue();
 				tf = priorityList.get(0);
-//				tf_idf = rank(tf, idf);         // uncomment this
-				tf_idf = priorityList.get(3);   // and comment this
-				//this may change to be url instead of index
+				tf_idf = rank(tf, idf, pageRank);
+
 				if(rankValues.get(index) == null)  // if index is not in the map add it
 				{
 					rankValues.put(index, tf_idf);
@@ -117,13 +147,13 @@ public class Relevance {
 	
 
 	//------------------------------------------------------------------------------------------------------------------
-	//------------------------------- calculating the relevance value --------------------------------------------------
+	//------------------------------------ calculating the rank value --------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
-	public float rank(float TF, float IDF) { // fore now just tf/idf
+	public float rank(float TF, float IDF, double pageRank) { // fore now just tf/idf
 		if (TF > 0.5)
 			return 0;
 		float IDF_log = (float) Math.log(IDF);
-		return IDF_log*TF;
+		return IDF_log*TF+(float)pageRank;
 	}
 	
 
@@ -161,7 +191,7 @@ public class Relevance {
 				test.put(vals[i], tempo+(float)i);
 			}
 		}
-		sortMap(test);
+//		sortMap(test);
 		
 	 }
 }
