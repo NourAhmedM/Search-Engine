@@ -10,13 +10,13 @@ public class QueryProcessor {
 	public List<String> query;
 	public Map<String, wordValue> wordsDictionary;
 	public Map<Integer, String> documentsURLs;
-	public ArrayList<String> allRankedURLs;
+	public ArrayList<String> allRankedURLs; // comment this
 	
 	// in constructor, initialize wordsDictionary and documentsURLs from database
 	public QueryProcessor(String searchQuery, Map<Integer, String> documentsURLs) throws IOException { //remove string 
-		this.query = splitAndStam(searchQuery);
-		this.documentsURLs = documentsURLs;
-    	this.wordsDictionary = new LinkedHashMap<String, wordValue>();
+		this.query = splitAndStam(searchQuery); // comment this
+		this.documentsURLs = documentsURLs; // this two
+    	this.wordsDictionary = new LinkedHashMap<String, wordValue>(); // initialize from database
 	}
 	
 	// this method runs the ranker to rank all links and return the number of links found
@@ -28,13 +28,15 @@ public class QueryProcessor {
 		{
 			rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
 		}
-		allRankedURLs = rankedURLs;
+		allRankedURLs = rankedURLs; //comment this
+		// put (rankedURLs) data into database
 		return rankedURLs.size();
 	}
 	
 	// method to get ten links
 	ArrayList<String> getTenLinks(int index){
 		ArrayList<String> rankedURLs = new ArrayList<String>();
+		ArrayList<String> allRankedURLs = new ArrayList<String>();   // this will get data from database
 		int startingIndex = (index-1)*10;
 		for(int i = 0; i < 10; i++)
 		{
@@ -45,8 +47,9 @@ public class QueryProcessor {
 		}
 		return rankedURLs;
 	}
+	
 	// method to get documents contains words in the query
-	public void getDocuments(Map<String, wordValue> wordsDictionary) { // takes map from indexer for now
+	public void getDocuments(Map<String, wordValue> wordsDictionary) { // takes map from indexer for now, remove map
 		for(int i = 0; i < query.size(); i++) {
 			//if the word in database put it in dictionary
 			if(wordsDictionary.containsKey(query.get(i)))
@@ -57,6 +60,8 @@ public class QueryProcessor {
 				
 		}
 	}
+	
+	// method to split the query and stem it
 	public List<String> splitAndStam(String searchQuery) throws IOException{
 		StopWordsRemover remover = new StopWordsRemover();
 		String[] splittedQuery;
