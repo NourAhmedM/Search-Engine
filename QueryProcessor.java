@@ -17,6 +17,9 @@ public class QueryProcessor {
 	public Map<String, wordValue> wordsDictionary;
 	public Map<Integer, String> documentsURLs;
 	
+	//====================================================================================================
+	//-------------------------------------- database methods --------------------------------------------
+	//====================================================================================================
 	public Map<Integer, String> readLinksWithIndecies()
 	{
 		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
@@ -64,6 +67,10 @@ public class QueryProcessor {
 		}
 		return wordsDictionary;
 	}
+	
+	//====================================================================================================
+	//-------------------------------------- the constructor ---------------------------------------------
+	//====================================================================================================
 	// in constructor, initialize wordsDictionary and documentsURLs from database
 	public QueryProcessor() throws IOException { //remove string 
 		
@@ -72,25 +79,52 @@ public class QueryProcessor {
     	this.wordsDictionary=new LinkedHashMap<String, wordValue>();
 	}
 	
+	//====================================================================================================
+	//------------------------------- is the search is phrase search -------------------------------------
+	//====================================================================================================
+	public boolean isPhraseSearch(String searchQuery) {
+		char first = searchQuery.charAt(0);
+	    char last = searchQuery.charAt(searchQuery.length()-1);
+	    
+	    if(first == '-' && last == '-')
+	    	return true;
+	    return false;
+	}
+	
+	//====================================================================================================
+	//----------------------------- method ro run the query processor ------------------------------------
+	//====================================================================================================
 	// this method runs the ranker to rank all links and return the number of links found
 	int runQueryProcessor(String searchQuery) throws IOException{
+		boolean isPhrase = isPhraseSearch(searchQuery);
 		this.query = splitAndStam(searchQuery);
 		getDocuments();
-		List<Integer> rankedIndicies = runRanker();
-		ArrayList<String> rankedURLs = new ArrayList<String>();
-		if (rankedIndicies!=null)
-		{
-			for(int i = 0; i < rankedIndicies.size(); i++)
-			{
-				rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
-			}
+		PhraseSearch ps = new PhraseSearch(searchQuery, this.query, this.wordsDictionary);
+		List<Integer> indicesPhrase = new ArrayList();
+		//checks if phrase search then get url indices
+		if(isPhrase) {
+			indicesPhrase = (List<Integer>) ps.search();
+			if (indicesPhrase.isEmpty())      //if phrase search but no result
+				return 0;
 		}
+		List<Integer> rankedIndicies = runRanker(isPhrase, indicesPhrase);    //edited
+		ArrayList<String> rankedURLs = new ArrayList<String>();
+		if (rankedIndicies==null)
+			return 0;
+		
+		for(int i = 0; i < rankedIndicies.size(); i++)
+		{
+			rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
+		}
+		
 		DBManager db = DBManager.getinstance();
 		db.saveSearchQueryLinks( rankedURLs);
 		return rankedURLs.size();
 	}
 	
-	// method to get ten links
+	//====================================================================================================
+	//------------------------------ method to get ten links from database --------------------------------
+	//====================================================================================================
 	ArrayList<String> getTenLinks(int index){
 		ArrayList<String> rankedURLs ;
 		DBManager db = DBManager.getinstance();
@@ -98,6 +132,9 @@ public class QueryProcessor {
 		return rankedURLs;
 	}
 	
+	//====================================================================================================
+	//---------------------------------- select the needed documents -------------------------------------
+	//====================================================================================================
 	// method to get documents contains words in the query
 	public void getDocuments() { // takes map from indexer for now, remove map
 		for(int i = 0; i < query.size(); i++) {
@@ -116,6 +153,9 @@ public class QueryProcessor {
 		}
 	}
 	
+	//====================================================================================================
+	//----------------------------- split, stem and remove stop words ------------------------------------
+	//====================================================================================================
 	// method to split the query and stem it
 	public List<String> splitAndStam(String searchQuery) throws IOException{
 		StopWordsRemover remover = new StopWordsRemover();
@@ -132,17 +172,17 @@ public class QueryProcessor {
 			{
 				// If this string is not present in newList add it
 	            if (!queryList.contains(splittedQuery[i]))
-	            	queryList.add(splittedQuery[i]); 
-	            
+	            	queryList.add(splittedQuery[i]);  
 			}
-			
 		}
 		System.out.print(queryList);
 		return queryList;
 	}
 	
-	public List<Integer> runRanker() {
-		getDocuments();
+	//====================================================================================================
+	//--------------------------------------- run the ranger ---------------------------------------------
+	//====================================================================================================
+	public List<Integer> runRanker(boolean phrase, List<Integer> indicesPhrase) {
 		if(this.wordsDictionary.isEmpty()) {
 			System.out.println("no result");
 			return null;
@@ -150,7 +190,7 @@ public class QueryProcessor {
 		
 		List<Integer> rankedIndicies;
 		Relevance r = new Relevance();
-		rankedIndicies = r.ranker(this.wordsDictionary);
+		rankedIndicies = r.ranker(this.wordsDictionary, indicesPhrase); //edit this
 		return rankedIndicies;
 		
 	}

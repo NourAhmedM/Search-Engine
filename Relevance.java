@@ -23,8 +23,10 @@ public class Relevance {
 		documentsURLs=readLinksWithIndecies();
 	}
 	
-	//uncomment this function
 	
+	//====================================================================================================
+	//-------------------------------------- database methods --------------------------------------------
+	//====================================================================================================
 	public  static HashMap<String,Double> readPageRanks() {
 		HashMap<String,Double> pageranks=new HashMap<String,Double>();
 		DBManager db = DBManager.getinstance();
@@ -42,10 +44,28 @@ public class Relevance {
 		}
 		return pageranks;
 	}
-	//------------------------------------------------------------------------------------------------------------------
-	//------------------------------- creating temp data for testing ---------------------------------------------------
-	//------------------------------------------------------------------------------------------------------------------
-
+	
+	public Map<Integer, String> readLinksWithIndecies()
+	{
+		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onelink = objects.next().toMap();
+	
+			String link = (String) onelink.get("link");
+			int index = (Integer) onelink.get("index");
+	
+			documentsURLs.put(index, link);
+	
+		}
+		return documentsURLs;
+	}
+	
+	//====================================================================================================
+	//------------------------------- creating temp data for testing -------------------------------------
+	//====================================================================================================
 	public static wordValue tempCreatData() {
 		Map<Integer, List<Double> > tempTdfDictionary;
 		List<Double> priorityList;
@@ -73,9 +93,9 @@ public class Relevance {
 		return wordVal;
 	}
 
-	//------------------------------------------------------------------------------------------------------------------
-	//--------------------------------------- method to sort the map ---------------------------------------------------
-	//------------------------------------------------------------------------------------------------------------------
+	//====================================================================================================
+	//------------------------------------ method to sort the map ----------------------------------------
+	//====================================================================================================
 	public List<Integer> sortMap(Map<Integer, Double> rankValues) {
 		Map<Integer, Double> unSortedMap = rankValues;
         
@@ -99,30 +119,11 @@ public class Relevance {
 		return sortedList;
 	}
 
-	
-	public Map<Integer, String> readLinksWithIndecies()
-	{
-		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
-		DBManager db = DBManager.getinstance();
-		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
-		Iterator<DBObject> objects = seedsCollection.find().iterator();
-		while (objects.hasNext()) {
-			Map onelink = objects.next().toMap();
-	
-			String link = (String) onelink.get("link");
-			int index = (Integer) onelink.get("index");
-	
-			documentsURLs.put(index, link);
-	
-		}
-		return documentsURLs;
-	}
-	
-	//------------------------------------------------------------------------------------------------------------------
-	//---------------------------------------- the ranking algorithm ---------------------------------------------------
-	//------------------------------------------------------------------------------------------------------------------
-	public List<Integer> ranker(Map<String, wordValue> wordsDictionary) { // return type may change to list of strings if url is used
-		Map<Integer, Double> rankValues = new Hashtable<Integer, Double>();    //if we used url instead of index this will be <string, float>
+	//====================================================================================================
+	//------------------------------------- the ranking algorithm ----------------------------------------
+	//====================================================================================================
+	public List<Integer> ranker(Map<String, wordValue> wordsDictionary, List<Integer> indices) {
+		Map<Integer, Double> rankValues = new Hashtable<Integer, Double>();
 		wordValue wordVal;
 		double idf;
 		Map<Integer, List<Double> > tdfDictionary;
@@ -137,33 +138,34 @@ public class Relevance {
 		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet()) // iterate on each word
 		{
 			wordVal = wordsDictionary.get(entry2.getKey());
-			System.out.println("");
-			System.out.println("the word: "+entry2.getKey()+" has word value:");
-			wordVal.print();
 			idf = wordVal.idf;
 			tdfDictionary = wordVal.tdfDictionary;
 			for (Entry<Integer, List<Double>> entry : tdfDictionary.entrySet())  // iterate on priority list
 			{
 				index = entry.getKey();
-				Link = documentsURLs.get(index); // get the URL link
-				pageRank = pageRankValues.get(Link);
-				priorityList = (ArrayList<Double>)entry.getValue();
-				
-				
-				tf = priorityList.get(0);
-				title = priorityList.get(1);
-				header = priorityList.get(2);
-				tf_idf = rank(tf, idf, pageRank, title, header);
-
-				if(rankValues.get(index) == null)  // if index is not in the map add it
-				{
-					rankValues.put(index, tf_idf);
-				}
-				else                              // if in the map sum the prev tf/idf and the new and replace it
-				{
-					double prev_tf_idf = rankValues.get(index);
-					rankValues.remove(index);
-					rankValues.put(index, prev_tf_idf+tf_idf);
+				// if indices is empty then it's not phrase search and execute the next lines
+				// if not empty then it's phrase search, execute only if the index exists
+				if((indices.isEmpty() || indices.contains(index))) {
+					Link = documentsURLs.get(index); // get the URL link
+					pageRank = pageRankValues.get(Link);
+					priorityList = (ArrayList<Double>)entry.getValue();
+					
+					
+					tf = priorityList.get(0);
+					title = priorityList.get(1);
+					header = priorityList.get(2);
+					tf_idf = rank(tf, idf, pageRank, title, header);
+	
+					if(rankValues.get(index) == null)  // if index is not in the map add it
+					{
+						rankValues.put(index, tf_idf);
+					}
+					else                              // if in the map sum the prev tf/idf and the new and replace it
+					{
+						double prev_tf_idf = rankValues.get(index);
+						rankValues.remove(index);
+						rankValues.put(index, prev_tf_idf+tf_idf);
+					}
 				}
 			}
 		}
@@ -173,13 +175,13 @@ public class Relevance {
 	}
 	
 
-	//------------------------------------------------------------------------------------------------------------------
-	//------------------------------------ calculating the rank value --------------------------------------------------
-	//------------------------------------------------------------------------------------------------------------------
-	public double rank(double TF, double IDF, double pageRank, double title, double header) { // fore now just tf/idf
+	//====================================================================================================
+	//---------------------------------- calculating the rank value --------------------------------------
+	//====================================================================================================
+	public double rank(double TF, double IDF, double pageRank, double title, double header) {
 		if (TF > 0.5)
 			return 0;
-		double IDF_log = (double) Math.log(IDF);
+		double IDF_log = (double) Math.log(1/IDF);
 		double headerLoad = header*0.3;
 		double titleLoad = title*0.6;
 		double tf_idf = IDF_log*TF;
@@ -187,6 +189,9 @@ public class Relevance {
 	}
 	
 
+	//====================================================================================================
+	//-------------------------------------- database methods --------------------------------------------
+	//====================================================================================================
 	//------------------------------------------------------------------------------------------------------------------
 	//------------------------------------ main function for testing ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
