@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,7 +30,7 @@ public class Crawlerr {
 	// links ,["Disalloewed or allowed , link to match with"]
 	private HashMap<String, ArrayList<ArrayList<String>>> robotsMap;
 
-	private static final int MAX_CRAWELED_PAGES = 10;
+	private static final int MAX_CRAWELED_PAGES = 100;
 
 	public Crawlerr() {
 		seeds = new HashMap<String, ArrayList<String>>();
@@ -51,6 +52,8 @@ public class Crawlerr {
 
 		}
 	}
+	
+	
 
 	public void updatevisitedAndContent(String link, ArrayList<String> contentAndVisited) {
 		DBManager db = DBManager.getinstance();
@@ -67,68 +70,85 @@ public class Crawlerr {
 		db.UpdatelinksAndRefernce(link, refers);
 	}
 
-	public void getPageLinks(int fromSeeds, String content, String link, String parentLink) {
+	public boolean imageExtension(String link)
+	{
+		if (link.contains(".png")||link.contains(".jpeg")||link.contains(".gif")||
+				link.contains(".pdf")||link.contains(".jpg"))
+			return true;
+		return false;
+	}
+	
+	public synchronized void getPageLinks(int fromSeeds, String content, String link, String parentLink) {
 
-		// 4. Check if you have already crawled the URLForCrawlers
-		// (we are intentionally not checking for duplicate content in this example)
-		if (RobotsAllow(link))
-			if (linkesReferMe.size() < MAX_CRAWELED_PAGES)
-				if (!linkesReferMe.containsKey(link)) {
-					try {
-						// 2. Fetch the HTML code
-						Document document = Jsoup.connect(link).get();
-						String docContent = document.toString();
+		//to ensure that no two urls go to same two pages
+		
+		link=link.split("#")[0];
+		
+		if (linkesReferMe.size() < MAX_CRAWELED_PAGES &&!imageExtension(link)&& RobotsAllow(link))
+			
+			if (!linkesReferMe.containsKey(link)) {
+				try {
+					// 2. Fetch the HTML code
+					Document document = Jsoup.connect(link).get();
+					String docContent = document.toString();
 
-						if (fromSeeds == 0 || (fromSeeds == 1 && !content.equals(docContent))) {
+					
+					if (fromSeeds == 0 || (fromSeeds == 1 && !content.equals(docContent))) {
 
-							// 3. Parse the HTML to extract links to other URLs
-							Elements linksOnPage = document.select("a[href]");
+						
+						// 3. Parse the HTML to extract links to other URLs
+						Elements linksOnPage = document.select("a[href]");
 
-							// 4. (i) If not add it to the index
-							HashSet<String> parents = new HashSet<String>();
-							if (fromSeeds == 0)
-								parents.add(parentLink);
-							linkesReferMe.put(link, parents);
-							//////////// update database////////
-							Updatelinks(link);
+						// 4. (i) If not add it to the index
+						HashSet<String> parents = new HashSet<String>();
+						if (fromSeeds == 0)
+							parents.add(parentLink);
+						linkesReferMe.put(link, parents);
+						//////////// update database////////
+						Updatelinks(link);
 
-							UpdatelinksAndRefernce(link, parents);
-							////////////////////////////////
-							// 5. For each extracted URL... go back to Step 4.
-							for (Element page : linksOnPage) {
-								getPageLinks(0, "", page.attr("abs:href"), link);
-
-							}
-							if (fromSeeds == 1) {
-
-								ArrayList<String> con_vis = new ArrayList<String>();
-								con_vis.add(docContent);
-								con_vis.add("visited");
-								seeds.put(link, con_vis);
-								updatevisitedAndContent(link, con_vis);
-							}
+						UpdatelinksAndRefernce(link, parents);
+						////////////////////////////////
+						// 5. For each extracted URL... go back to Step 4.
+						for (Element page : linksOnPage) {
+							getPageLinks(0, "", page.attr("abs:href"), link);
 
 						}
-					} catch (IOException e) {
-						System.err.println("exeptionnnnnnnnnnnnnnnnnnnnnnn");
+						if (fromSeeds == 1) {
+
+							ArrayList<String> con_vis = new ArrayList<String>();
+							con_vis.add(docContent);
+							con_vis.add("visited");
+							seeds.put(link, con_vis);
+							updatevisitedAndContent(link, con_vis);
+						}
+
 					}
-				} else {
-					if (fromSeeds == 0) {
-						linkesReferMe.get(link).add(parentLink);
-						UpdatelinksAndRefernce(link, linkesReferMe.get(link));
-					}
+				} catch (IOException e) {
+					System.err.println("exeptionnnnnnnnnnnnnnnnnnnnnnn");
 				}
+			} else {
+				if (fromSeeds == 0) {
+					linkesReferMe.get(link).add(parentLink);
+					UpdatelinksAndRefernce(link, linkesReferMe.get(link));
+				}
+			}
 	}
 
 	public boolean RobotsAllow(String url) {
+		
 		String[] splittedUrl = url.split("/");
+		if(splittedUrl.length<3)
+			return false;
 		String rootUrl = splittedUrl[0] + "//" + splittedUrl[2];
 		String robots = splittedUrl[0] + "//" + splittedUrl[2] + "/robots.txt";
 
 		if (robotsMap.containsKey(robots)) {
+			
 			boolean allowed = true;
+			url = url.replace("?", "؟");
 			for (int i = 0; i < robotsMap.get(robots).size(); i++) {
-				System.out.println("aaaaaaaaaaaaaaaaaaaaa");
+				
 				if (robotsMap.get(robots).get(i).get(0).equals("Disallow:")) {
 					if (url.matches(robotsMap.get(robots).get(i).get(1)))
 						allowed = false;
@@ -141,6 +161,7 @@ public class Crawlerr {
 			return allowed;
 		} else {
 			try {
+				
 				URL robotsURL = new URL(robots);
 				URLConnection urlcon = robotsURL.openConnection();
 				InputStream inputStream = urlcon.getInputStream();
@@ -218,7 +239,7 @@ public class Crawlerr {
 
 	}
 
-	public void crawl() {
+	public void InitialCrawl() {
 		readSeeds();
 		if (!seeds.isEmpty()) {
 			boolean allVisited = true;
@@ -238,19 +259,59 @@ public class Crawlerr {
 				}
 			}
 
-			for (Map.Entry<String, ArrayList<String>> entry : seeds.entrySet()) {
-				if (entry.getValue().get(1).equals("notvisited") && linkesReferMe.size() < MAX_CRAWELED_PAGES) {
-					getPageLinks(1, entry.getValue().get(0), entry.getKey(), "");
-
-				}
-			}
 		}
 	}
 
-	public static void main(String[] args) {
+	public void crawl(int seedsPerThread)
+	{
+		
+		for (Map.Entry<String, ArrayList<String>> entry : seeds.entrySet()) {
+			
+			if (entry.getValue().get(1).equals("notvisited") && linkesReferMe.size() < MAX_CRAWELED_PAGES) {
+				
+				getPageLinks(1, entry.getValue().get(0), entry.getKey(), "");
+
+			}
+			
+		}
+	}
+	
+	class CrawlerRunnable implements Runnable {
+		private Crawlerr crawler;
+		private int seedsPerThread;
+		public CrawlerRunnable (Crawlerr c,int n) {
+			this.crawler = c;
+			this.seedsPerThread=n;
+		}
+
+		public void run () {
+				crawler.crawl(seedsPerThread);
+		}
+	}
+	
+	public static void main(String[] args) throws InterruptedException {
 
 		Crawlerr crawler1 = new Crawlerr();
-		crawler1.crawl();
+		crawler1.InitialCrawl();
+		
+		Scanner sc= new Scanner(System.in);    
+		System.out.print("Enter Number of threads:  ");  
+		int threadsNum= sc.nextInt();  
+		
+		int seedsSize=crawler1.seeds.size();
+		
+		int seedsPerThread=seedsSize/threadsNum;
+		for(int i=0;i<threadsNum;i++)
+		{
+			Thread t = new Thread (crawler1.new CrawlerRunnable(crawler1,seedsPerThread));
+			t.setName(""+i);
+			t.start(); 
+			t.join();
+		}
+		
+		
+		
+		
 
 	}
 }

@@ -1,59 +1,114 @@
+package crawling;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+
 
 
 public class QueryProcessor {
+	public Map<String, wordValue> allWordsDictionary;
 	public List<String> query;
 	public Map<String, wordValue> wordsDictionary;
 	public Map<Integer, String> documentsURLs;
-	public ArrayList<String> allRankedURLs; // comment this
 	
+	public Map<Integer, String> readLinksWithIndecies()
+	{
+		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onelink = objects.next().toMap();
+	
+			String link = (String) onelink.get("link");
+			int index = (Integer) onelink.get("index");
+	
+			documentsURLs.put(index, link);
+	
+		}
+		return documentsURLs;
+	}
+	
+	public Map<String, wordValue> readWordsDic()
+	{
+		Map<String, wordValue> wordsDictionary=new LinkedHashMap<String, wordValue>();
+		
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getwordsDictionary().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map oneword = objects.next().toMap();
+	
+			String word = (String) oneword.get("word");
+			
+			double idfd = (double) oneword.get("idf");
+			double idf=(double)idfd;
+			ArrayList<Integer>linksIndecies=(ArrayList<Integer>)oneword.get("linksIndecies");
+			ArrayList<List<Double>>listCorespondsToIndecies=(ArrayList<List<Double>>)oneword.get("listCorespondsToIndecies");
+	
+			Map<Integer, List<Double> >wordVaueMap=new LinkedHashMap<Integer, List<Double> >();
+			for(int i=0;i<linksIndecies.size();i++)
+			{
+				wordVaueMap.put(linksIndecies.get(i), listCorespondsToIndecies.get(i));
+				
+			}
+			wordValue wordvlaue=new wordValue(idf,wordVaueMap);
+			wordsDictionary.put(word, wordvlaue);
+	
+		}
+		return wordsDictionary;
+	}
 	// in constructor, initialize wordsDictionary and documentsURLs from database
-	public QueryProcessor(String searchQuery, Map<Integer, String> documentsURLs) throws IOException { //remove string 
-		this.query = splitAndStam(searchQuery); // comment this
-		this.documentsURLs = documentsURLs; // this two
-    	this.wordsDictionary = new LinkedHashMap<String, wordValue>(); // initialize from database
+	public QueryProcessor() throws IOException { //remove string 
+		
+		this.documentsURLs = readLinksWithIndecies(); // this two
+    	this.allWordsDictionary = readWordsDic(); // initialize from database
+    	this.wordsDictionary=new LinkedHashMap<String, wordValue>();
 	}
 	
 	// this method runs the ranker to rank all links and return the number of links found
 	int runQueryProcessor(String searchQuery) throws IOException{
 		this.query = splitAndStam(searchQuery);
-		List<Integer> rankedIndicies = runRanker(wordsDictionary);
+		getDocuments();
+		List<Integer> rankedIndicies = runRanker();
 		ArrayList<String> rankedURLs = new ArrayList<String>();
-		for(int i = 0; i < rankedIndicies.size(); i++)
+		if (rankedIndicies!=null)
 		{
-			rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
+			for(int i = 0; i < rankedIndicies.size(); i++)
+			{
+				rankedURLs.add(documentsURLs.get(rankedIndicies.get(i)));  //getting the URLs corresponding to the indices
+			}
 		}
-		allRankedURLs = rankedURLs; //comment this
-		// put (rankedURLs) data into database
+		DBManager db = DBManager.getinstance();
+		db.saveSearchQueryLinks( rankedURLs);
 		return rankedURLs.size();
 	}
 	
 	// method to get ten links
 	ArrayList<String> getTenLinks(int index){
-		ArrayList<String> rankedURLs = new ArrayList<String>();
-		ArrayList<String> allRankedURLs = new ArrayList<String>();   // this will get data from database
-		int startingIndex = (index-1)*10;
-		for(int i = 0; i < 10; i++)
-		{
-			if(allRankedURLs.get(startingIndex+i) == null)
-				break;
-			
-			rankedURLs.add(allRankedURLs.get(startingIndex+i));
-		}
+		ArrayList<String> rankedURLs ;
+		DBManager db = DBManager.getinstance();
+		rankedURLs=db.getTenOfSearchQueryLinks(index);
 		return rankedURLs;
 	}
 	
 	// method to get documents contains words in the query
-	public void getDocuments(Map<String, wordValue> wordsDictionary) { // takes map from indexer for now, remove map
+	public void getDocuments() { // takes map from indexer for now, remove map
 		for(int i = 0; i < query.size(); i++) {
 			//if the word in database put it in dictionary
-			if(wordsDictionary.containsKey(query.get(i)))
-				this.wordsDictionary.put(query.get(i), wordsDictionary.get(query.get(i))); 
+			if(allWordsDictionary.containsKey(query.get(i)))
+			{
+				String s=query.get(i);
+				wordValue w=allWordsDictionary.get(query.get(i));
+ 				
+				this.wordsDictionary.put(s,w ); 
+			}
 			//if not print it
 			else
 				System.out.println("this word in not exsist: " + query.get(i)); 
@@ -82,11 +137,12 @@ public class QueryProcessor {
 			}
 			
 		}
+		System.out.print(queryList);
 		return queryList;
 	}
 	
-	public List<Integer> runRanker(Map<String, wordValue> wordsDictionary) {
-		getDocuments(wordsDictionary);
+	public List<Integer> runRanker() {
+		getDocuments();
 		if(this.wordsDictionary.isEmpty()) {
 			System.out.println("no result");
 			return null;
@@ -101,20 +157,8 @@ public class QueryProcessor {
 	
 	public static void main(String[] args) throws IOException {
 		
-		Indexer indexer;
-		indexer  = new Indexer();
-    	indexer.getDocumentsURLs();
-    	indexer.Indexing(indexer.documentsURLs);
-    	
-		String s = "uploaded results golden halfed energy parameters methods";
-		QueryProcessor qp = new QueryProcessor(s, indexer.documentsURLs);
-		List<String> q = qp.query;
-		for(int i = 0; i < q.size(); i++) {
-			System.out.println(q.get(i)); 
-		}
-		List<Integer> l = qp.runRanker(indexer.wordsDictionary);
-		System.out.println(l);
-		
+		QueryProcessor q=new QueryProcessor();
+		q.runQueryProcessor("sql");
 		
 	}
 }

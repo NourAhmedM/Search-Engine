@@ -1,3 +1,5 @@
+package crawling;
+
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -18,41 +20,35 @@ public class PageRank {
  
  
  public static Map<String, ArrayList<String>> dumDataURLs() {
-	 Map<String, ArrayList<String>> URLs2 = new HashMap<String, ArrayList<String>>();
-	 ArrayList<String> temp = new ArrayList();
-	 
-	 temp.add("s2");
-	 temp.add("s3");
-	 temp.add("s5");
-	 URLs2.put("s1", temp);
+	 HashMap<String,ArrayList<String>>LinksAndRefers=new HashMap<String,ArrayList<String>>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getLinksAndRefers().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map oneLink = objects.next().toMap();
 
-	 temp = new ArrayList();
-	 
-	 temp.add("s3");
-	 temp.add("s5");
-	 URLs2.put("s2", temp);
+			String link = (String) oneLink.get("link");
+			ArrayList<String> cont_visit = (ArrayList<String>) oneLink.get("refers");
 
-	 temp = new ArrayList();
-	 
-	 temp.add("s4");
-	 URLs2.put("s3", temp);
-
-	 temp = new ArrayList();
-	 
-	 temp.add("s5");
-	 URLs2.put("s4", temp);
-
-	 return URLs2;
+			LinksAndRefers.put(link, cont_visit);
+		}
+		return LinksAndRefers;
  }
  public static Map<Integer, String> dumDataDocument() {
-	 Map<Integer, String> documentsURLs2 = new HashMap<Integer, String>();
-	 String[] str = {"s1", "s2", "s3", "s4", "s5"};
-	 for(int i = 0; i < 5; i++)
-	 {
-		 documentsURLs2.put(i, str[i]);
-	 }
-
-	 return documentsURLs2;
+	 Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onelink = objects.next().toMap();
+	
+			String link = (String) onelink.get("link");
+			int index = (Integer) onelink.get("index");
+	
+			documentsURLs.put(index, link);
+	
+		}
+		return documentsURLs;
  }
  public PageRank(Map<String, ArrayList<String>> URLs, Map<Integer, String> documentsURLs){
 	 this.documentsURLs = documentsURLs;
@@ -103,8 +99,8 @@ public class PageRank {
  }
 
 
-static void normalize(float[] rank) {   
-	 float sum = 0;
+static void normalize(double[] rank) {   
+	 double sum = 0;
 	 for(int i = 0; i < rank.length; i++)
 		 sum += rank[i];
 		 
@@ -173,7 +169,7 @@ static void normalize(float[] rank) {
 //			 rank1[j] = (1-lampda)*rank0[j]+lampda*pr;
 //				 System.out.println(rank1[j]);
 		 }
-//			 normalize(rank1);
+			 normalize(rank1);
 		 rank0 = rank1;
 	 }
 	 
@@ -184,5 +180,8 @@ static void normalize(float[] rank) {
 	 }
 	 System.out.println(pagesRank);
 //	 savePagesRank(pagesRank);
+	 DBManager db = DBManager.getinstance();
+	 db.savePagesRank(pagesRank);
+	 
 	}
 }

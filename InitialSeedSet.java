@@ -13,8 +13,12 @@ public class InitialSeedSet {
 		value.add("");
 		value.add("notvisited");
 		ArrayList<String>keys= new ArrayList<String>();
-		keys.add("https://www.javatpoint.com/java-hashmap");
-		keys.add("https://mongodb.github.io/mongo-java-driver/3.4/driver/getting-started/quick-start");
+		
+		keys.add("https://www.geeksforgeeks.org/");
+		keys.add("https://www.javatpoint.com/");
+		
+		keys.add("https://www.w3schools.com/");
+		
 		
 		 for(int i=0;i<keys.size();i++){    
 			 db.UpdateOneSeed(keys.get(i),value);

@@ -1,3 +1,6 @@
+
+package crawling;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,6 +53,9 @@ public class HTMLParser{
 	List<String> toList(String str)
 	{
 		List<String> result   = new ArrayList<String>();
+		if (str==null)
+			return result;
+		
 		String[] arr = str.split(" ");   
 		/*System.out.println("result : " 
                 + str);*/

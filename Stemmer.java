@@ -32,6 +32,8 @@
    Release 4
 
 */
+package crawling;
+
 import java.io.*;
 
 import org.tartarus.snowball.ext.PorterStemmer;
@@ -60,7 +62,7 @@ class Stemmer
     {
 		Stemmer stemmer =  new Stemmer();	
       System.out.println("Jsoup Can read HTML page from URL, title : " 
-                                     + stemmer.stemTerm("computations"));
+                                     + stemmer.stemTerm("filter"));
      
     }
 	    

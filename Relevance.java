@@ -1,15 +1,15 @@
+package crawling;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-
-import javax.swing.text.html.HTMLDocument.Iterator;
 
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -19,51 +19,54 @@ public class Relevance {
 	public Map<Integer, String> documentsURLs; //fill it from database
 	
 	public Relevance () {
+		
+		documentsURLs=readLinksWithIndecies();
 	}
 	
 	//uncomment this function
 	
-//	public  static HashMap<String,Double> readPageRanks() {
-//		HashMap<String,Double> pageranks=new HashMap<String,Double>();
-//		DBManager db = DBManager.getinstance();
-//		DBCollection seedsCollection = db.getPageRanks().getCollection();
-//		Iterator<DBObject> objects = seedsCollection.find().iterator();
-//		while (objects.hasNext()) {
-//			Map onepage = objects.next().toMap();
-//
-//			String link = (String) onepage.get("link");
-//			Double rank = (Double) onepage.get("rank");
-//
-//			pageranks.put(link, rank);
-//
-//		}
-//		return pageranks;
-//	}
+	public  static HashMap<String,Double> readPageRanks() {
+		HashMap<String,Double> pageranks=new HashMap<String,Double>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getPageRanks().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onepage = objects.next().toMap();
+
+			String link = (String) onepage.get("link");
+			double rankkk = (double) onepage.get("rank");
+			double rank = (double) rankkk;
+
+			pageranks.put(link, rank);
+
+		}
+		return pageranks;
+	}
 	//------------------------------------------------------------------------------------------------------------------
 	//------------------------------- creating temp data for testing ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
 
 	public static wordValue tempCreatData() {
-		Map<Integer, List<Float> > tempTdfDictionary;
-		List<Float> priorityList;
+		Map<Integer, List<Double> > tempTdfDictionary;
+		List<Double> priorityList;
 
 		int headerCount = ThreadLocalRandom.current().nextInt(0, 10);
 		int titleCount = ThreadLocalRandom.current().nextInt(0, 10);
 		int bodyCount = ThreadLocalRandom.current().nextInt(0, 10);
 
-		 float idf = ThreadLocalRandom.current().nextFloat();
+		 double idf = ThreadLocalRandom.current().nextDouble();
 //		 System.out.println("the random float number is "+idf);
 		 
-		 float tdf = ThreadLocalRandom.current().nextFloat();
+		 double tdf = ThreadLocalRandom.current().nextDouble();
 //		 System.out.println("the 2nd random float number is "+tdf);
 		
-		 priorityList = new ArrayList<Float>();
+		 priorityList = new ArrayList<Double>();
 		 priorityList.add(tdf);
-		 priorityList.add((float)titleCount); 
-		 priorityList.add((float)headerCount);
-		 priorityList.add((float)bodyCount);
+		 priorityList.add((double)titleCount); 
+		 priorityList.add((double)headerCount);
+		 priorityList.add((double)bodyCount);
 		 
-		 tempTdfDictionary = new LinkedHashMap<Integer, List<Float>>() ;
+		 tempTdfDictionary = new LinkedHashMap<Integer, List<Double>>() ;
 		 tempTdfDictionary.put(1, priorityList);
 
 		 wordValue wordVal = new wordValue(idf, tempTdfDictionary);
@@ -73,12 +76,12 @@ public class Relevance {
 	//------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------- method to sort the map ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
-	public List<Integer> sortMap(Map<Integer, Float> rankValues) {
-		Map<Integer, Float> unSortedMap = rankValues;
+	public List<Integer> sortMap(Map<Integer, Double> rankValues) {
+		Map<Integer, Double> unSortedMap = rankValues;
         
 //		System.out.println("Unsorted Map : " + unSortedMap);
 		 
-		LinkedHashMap<Integer, Float> sortedMap = new LinkedHashMap<>();
+		LinkedHashMap<Integer, Double> sortedMap = new LinkedHashMap<>();
 		 
 		unSortedMap.entrySet()
 		    .stream()
@@ -89,28 +92,47 @@ public class Relevance {
 		
 		List<Integer> sortedList = new ArrayList<Integer>();
 		// store the indices of the urls
-		for (Entry<Integer, Float> entry : sortedMap.entrySet())
+		for (Entry<Integer, Double> entry : sortedMap.entrySet())
 		{
 			sortedList.add(entry.getKey());
 		}
 		return sortedList;
 	}
 
+	
+	public Map<Integer, String> readLinksWithIndecies()
+	{
+		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onelink = objects.next().toMap();
+	
+			String link = (String) onelink.get("link");
+			int index = (Integer) onelink.get("index");
+	
+			documentsURLs.put(index, link);
+	
+		}
+		return documentsURLs;
+	}
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//---------------------------------------- the ranking algorithm ---------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
 	public List<Integer> ranker(Map<String, wordValue> wordsDictionary) { // return type may change to list of strings if url is used
-		Map<Integer, Float> rankValues = new Hashtable<Integer, Float>();    //if we used url instead of index this will be <string, float>
+		Map<Integer, Double> rankValues = new Hashtable<Integer, Double>();    //if we used url instead of index this will be <string, float>
 		wordValue wordVal;
-		float idf;
-		Map<Integer, List<Float> > tdfDictionary;
-		List<Float> priorityList;
+		double idf;
+		Map<Integer, List<Double> > tdfDictionary;
+		ArrayList<Double> priorityList;
 		int index;
-		float tf;
-		float tf_idf;
+		double tf;
+		double tf_idf;
 		double pageRank = 1;
 		String Link;
-//		HashMap<String,Double> pageRankValues = readPageRanks();
+		HashMap<String,Double> pageRankValues = readPageRanks();
 		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet()) // iterate on each word
 		{
 			wordVal = wordsDictionary.get(entry2.getKey());
@@ -119,13 +141,16 @@ public class Relevance {
 			wordVal.print();
 			idf = wordVal.idf;
 			tdfDictionary = wordVal.tdfDictionary;
-			for (Entry<Integer, List<Float>> entry : tdfDictionary.entrySet())  // iterate on priority list
+			for (Entry<Integer, List<Double>> entry : tdfDictionary.entrySet())  // iterate on priority list
 			{
 				index = entry.getKey();
-//				Link = documentsURLs.get(index); // get the URL link
-//				pageRank = pageRankValues.get(Link);
-				priorityList = entry.getValue();
-				tf = priorityList.get(0);
+				Link = documentsURLs.get(index); // get the URL link
+				pageRank = pageRankValues.get(Link);
+				priorityList = (ArrayList<Double>)entry.getValue();
+				
+				
+				tf=priorityList.get(0);
+				
 				tf_idf = rank(tf, idf, pageRank);
 
 				if(rankValues.get(index) == null)  // if index is not in the map add it
@@ -134,7 +159,7 @@ public class Relevance {
 				}
 				else                              // if in the map sum the prev tf/idf and the new and replace it
 				{
-					float prev_tf_idf = rankValues.get(index);
+					double prev_tf_idf = rankValues.get(index);
 					rankValues.remove(index);
 					rankValues.put(index, prev_tf_idf+tf_idf);
 				}
@@ -149,11 +174,11 @@ public class Relevance {
 	//------------------------------------------------------------------------------------------------------------------
 	//------------------------------------ calculating the rank value --------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
-	public float rank(float TF, float IDF, double pageRank) { // fore now just tf/idf
+	public double rank(double TF, double IDF, double pageRank) { // fore now just tf/idf
 		if (TF > 0.5)
 			return 0;
-		float IDF_log = (float) Math.log(IDF);
-		return IDF_log*TF+(float)pageRank;
+		double IDF_log = (double) Math.log(IDF);
+		return IDF_log*TF+(double)pageRank;
 	}
 	
 
@@ -178,17 +203,17 @@ public class Relevance {
 		wordsDictionary.put("Geeks", w);
 		
 		int[] vals= {1, 5, 2, 4, 5, 1, 1};
-		Map<Integer, Float> test = new HashMap<Integer, Float>();
+		Map<Integer, Double> test = new HashMap<Integer, Double>();
 		for(int i=0; i<7; i++) {
 			if(test.get(vals[i]) == null)
 			{
-				test.put(vals[i], (float)i);
+				test.put(vals[i], (double)i);
 			}
 			else
 			{
-				Float tempo = test.get(vals[i]);
+				double tempo = test.get(vals[i]);
 				test.remove(vals[i]);
-				test.put(vals[i], tempo+(float)i);
+				test.put(vals[i], tempo+(double)i);
 			}
 		}
 //		sortMap(test);

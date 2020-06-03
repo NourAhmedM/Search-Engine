@@ -1,9 +1,12 @@
+package crawling;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +14,9 @@ import java.util.Scanner;
 import java.util.Set;
 
 import javax.swing.text.html.HTML;
+
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 
 public class Indexer 
 {
@@ -26,15 +32,23 @@ public class Indexer
     	documentsDictionary = new LinkedHashMap<Integer,  Set<String> >();
     	
     }
+    public void outInDatabase()
+    {
+
+		 DBManager db = DBManager.getinstance();
+		 db.savedocumentsDictionary(documentsDictionary);
+		 db.savedocumentsURLs(documentsURLs);
+		 db.savewordsDictionary(wordsDictionary);
+    	
+    }
     public static void main(String args[]) throws IOException
     {
 		Indexer indexer;
 		indexer  = new Indexer();
     	indexer.getDocumentsURLs();
+    	System.out.println(indexer.documentsURLs.get(0));
     	indexer.Indexing(indexer.documentsURLs);
-    	wordValue entry;
-    	entry = indexer.wordsDictionary.get("home");
-    	entry.print();
+    	indexer.outInDatabase();
     	/*for (Map.Entry<String, wordValue>  entry : indexer.wordsDictionary .entrySet())
 		 {	
    		 System.out.println("word : " 
@@ -46,17 +60,19 @@ public class Indexer
     }
 	 public void getDocumentsURLs() throws IOException 
 	 {
-	       
-	    	File file = new File("assets/urls.txt");   
-	    	Scanner sc = new Scanner(file , "UTF-8");     
-	    	int temp = 0;  
-	    	
-	    	while(sc.hasNextLine())  
-	    	{  String url  = sc.nextLine();
-	    		documentsURLs.put(temp,url);
-	    		temp++;
-	    		
-	    	}
+		 DBManager db = DBManager.getinstance();
+		 DBCollection seedsCollection = db.getLinks().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		int i=0;
+		while (objects.hasNext()) {
+			Map oneLink = objects.next().toMap();
+		
+			String link = (String) oneLink.get("link");
+		
+			documentsURLs.put(i, link);
+			i+=1;
+
+			}
 	    	
 	 }
 	 void Indexing(  Map<Integer, String> documentsURLs)
@@ -91,18 +107,18 @@ public class Indexer
 				{
 				
 				     wordValue wordVal;
-				     Map<Integer, List<Float>> dataOfEachUrl;
-				     List<Float> priorityList;
+				     Map<Integer, List<Double>> dataOfEachUrl;
+				     List<Double> priorityList;
 				     headerCount = Collections.frequency(header,word);
 					 titleCount = Collections.frequency(title,word);
 					 bodyCount = Collections.frequency(body,word) - headerCount;
 					 /*System.out.println("counts : " 
 			                    + headerCount+","+titleCount+","+ bodyCount);*/
 					 /////
-					 float idf = 1;//getIdf(documentsURLs,word);
+					 double idf = 1;//getIdf(documentsURLs,word);
 					 int docSize = fullText.size();
 					 int occurrences = Collections.frequency(fullText,word);
-					 float tdf = (float)occurrences/ (float)docSize;
+					 double tdf = (double)occurrences/ (double)docSize;
 					 /*System.out.println("occurrences : " 
 			                    + occurrences);
 					 System.out.println("docSize : " 
@@ -111,9 +127,9 @@ public class Indexer
 					 ////	 
 					 priorityList = new ArrayList();
 					 priorityList.add(tdf);
-					 priorityList.add((float)titleCount); 
-					 priorityList.add((float)headerCount);
-					 priorityList.add((float)bodyCount);
+					 priorityList.add((double)titleCount); 
+					 priorityList.add((double)headerCount);
+					 priorityList.add((double)bodyCount);
 				    
 				    if (wordsDictionary.get(word) == null) 
 					{
@@ -141,7 +157,7 @@ public class Indexer
 		 }
 	           
 	 }
-	 float getIdf ( Map<Integer, String> documentsURLs, String word) 
+	 double getIdf ( Map<Integer, String> documentsURLs, String word) 
 	 {
 		 HTMLParser htmlDoc ;
 		 Integer totalSize = documentsURLs.size();
@@ -157,7 +173,7 @@ public class Indexer
 		 return totalSize/ targetDocCount;
 		 
 	 }
-	 float getTDF ( String url, String word) 
+	 double getTDF ( String url, String word) 
 	 {
 		 HTMLParser htmlDoc  ;
 		 htmlDoc = new HTMLParser(url);
