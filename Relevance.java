@@ -131,6 +131,7 @@ public class Relevance {
 		double tf;
 		double tf_idf;
 		double pageRank = 1;
+		double title, header;
 		String Link;
 		HashMap<String,Double> pageRankValues = readPageRanks();
 		for (Entry<String, wordValue> entry2 : wordsDictionary.entrySet()) // iterate on each word
@@ -149,9 +150,10 @@ public class Relevance {
 				priorityList = (ArrayList<Double>)entry.getValue();
 				
 				
-				tf=priorityList.get(0);
-				
-				tf_idf = rank(tf, idf, pageRank);
+				tf = priorityList.get(0);
+				title = priorityList.get(1);
+				header = priorityList.get(2);
+				tf_idf = rank(tf, idf, pageRank, title, header);
 
 				if(rankValues.get(index) == null)  // if index is not in the map add it
 				{
@@ -174,11 +176,14 @@ public class Relevance {
 	//------------------------------------------------------------------------------------------------------------------
 	//------------------------------------ calculating the rank value --------------------------------------------------
 	//------------------------------------------------------------------------------------------------------------------
-	public double rank(double TF, double IDF, double pageRank) { // fore now just tf/idf
+	public double rank(double TF, double IDF, double pageRank, double title, double header) { // fore now just tf/idf
 		if (TF > 0.5)
 			return 0;
 		double IDF_log = (double) Math.log(IDF);
-		return IDF_log*TF+(double)pageRank;
+		double headerLoad = header*0.3;
+		double titleLoad = title*0.6;
+		double tf_idf = IDF_log*TF;
+		return tf_idf+pageRank+titleLoad+headerLoad;
 	}
 	
 
