@@ -1,6 +1,7 @@
 package crawling;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,25 +93,29 @@ public class QueryProcessor {
 	}
 	
 	//====================================================================================================
-	//----------------------------- method ro run the query processor ------------------------------------
+	//----------------------------- method to run the query processor ------------------------------------
 	//====================================================================================================
-	// this method runs the ranker to rank all links and return the number of links found
-	int runQueryProcessor(String searchQuery) throws IOException{
+	// this method runs the ranker to rank all links and return 10 the number of links
+	public Map<Integer, ArrayList<String >> runQueryProcessor(String searchQuery,int index) throws IOException{
 		boolean isPhrase = isPhraseSearch(searchQuery);
 		this.query = splitAndStam(searchQuery);
 		getDocuments();
 		PhraseSearch ps = new PhraseSearch(searchQuery, this.query, this.wordsDictionary);
 		List<Integer> indicesPhrase = new ArrayList();
+		Map<Integer, ArrayList<String >> TenLinksWithNum=new HashMap<Integer, ArrayList<String >>();
 		//checks if phrase search then get url indices
 		if(isPhrase) {
 			indicesPhrase = (List<Integer>) ps.search();
 			if (indicesPhrase.isEmpty())      //if phrase search but no result
 				return 0;
 		}
-		List<Integer> rankedIndicies = runRanker(isPhrase, indicesPhrase);    //edited
+		List<Integer> rankedIndicies = runRanker(isPhrase, indicesPhrase);
 		ArrayList<String> rankedURLs = new ArrayList<String>();
+		//if there is no indices then no result return empty map
 		if (rankedIndicies==null)
-			return 0;
+		{
+			return TenLinksWithNum;
+		}
 		
 		for(int i = 0; i < rankedIndicies.size(); i++)
 		{
@@ -118,18 +123,19 @@ public class QueryProcessor {
 		}
 		
 		DBManager db = DBManager.getinstance();
-		db.saveSearchQueryLinks( rankedURLs);
-		return rankedURLs.size();
-	}
-	
-	//====================================================================================================
-	//------------------------------ method to get ten links from database --------------------------------
-	//====================================================================================================
-	ArrayList<String> getTenLinks(int index){
-		ArrayList<String> rankedURLs ;
-		DBManager db = DBManager.getinstance();
-		rankedURLs=db.getTenOfSearchQueryLinks(index);
-		return rankedURLs;
+		//------------------------------------------------------------------------------------------
+		int URLsSize = rankedURLs.size();
+		ArrayList<String >TenLinks=new ArrayList<String >();
+		for(int i=index*10-10;i<index*10;i++)
+		{
+			if (i < URLsSize)
+				break;
+			TenLinks.add(rankedURLs.get(i));
+		}
+		
+		TenLinksWithNum.put(URLsSize, TenLinks);
+		
+		return TenLinksWithNum;
 	}
 	
 	//====================================================================================================
