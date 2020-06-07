@@ -28,11 +28,12 @@ public class DBManager {
 	
 	private DB database;
 	private static DBManager instance;
-	
+	private MongoClient mongoClient;
 
 	private DBManager()
 	{
 		MongoClient mongo = new MongoClient("localhost" , 27017);
+		mongoClient=mongo;
 		database=mongo.getDB("SearchEngine");
 		
 		
@@ -223,18 +224,20 @@ public class DBManager {
 	
 	
 	public ArrayList<String> getTenOfSearchQueryLinks(int StartingIndex) {
-		DBCollection collection = database.getCollection("SearchQueryLinks");
-		Iterator<DBObject>  objects = collection.find((DBObject)and(gte("index", StartingIndex*10)
+		MongoDatabase SearchEngine = mongoClient.getDatabase("SearchEngine");
+		MongoCollection<Document> collection = SearchEngine.getCollection("SearchQueryLinks");
+		Iterator<Document>  objects = collection.find(and(gte("index", StartingIndex*10)
 				, lt("index", (StartingIndex+1)*10))).iterator();
 		
     	ArrayList<String> links = new ArrayList<String>();
     	while (objects.hasNext()) {
-    		Map onelink = objects.next().toMap();
-    		String link = (String)onelink.get("link");
-    		links.add(link);
+    		String Url = (String) objects.next().get("link");
+    		links.add(Url);
     	}
     	return links;
     }
+	
+	
 	
 
 	public DBCursor getwordsDictionary(){

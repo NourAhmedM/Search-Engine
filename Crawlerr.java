@@ -30,7 +30,7 @@ public class Crawlerr {
 	// links ,["Disalloewed or allowed , link to match with"]
 	private HashMap<String, ArrayList<ArrayList<String>>> robotsMap;
 
-	private static final int MAX_CRAWELED_PAGES = 100;
+	private static final int MAX_CRAWELED_PAGES = 1000;
 
 	public Crawlerr() {
 		seeds = new HashMap<String, ArrayList<String>>();
@@ -78,16 +78,32 @@ public class Crawlerr {
 		return false;
 	}
 	
-	public synchronized void getPageLinks(int fromSeeds, String content, String link, String parentLink) {
+	public void getPageLinks(int fromSeeds, String content, String link, String parentLink) {
 
 		//to ensure that no two urls go to same two pages
 		
+		link=link.toLowerCase();
+		
 		link=link.split("#")[0];
+		if(!link.isEmpty()&&link.charAt(link.length()-1)=='/')
+		{
+			
+			link=link.substring(0, link.length()-1);
+			
+		}
+		if (link.length()>5&&!link.substring(0,5).equals("https"))
+			link="https"+link.subSequence(5, link.length());
+		
+		
+		int temp=link.indexOf("/?ref");
+		if (temp!=-1)
+			link=link.substring(0, temp);
 		
 		if (linkesReferMe.size() < MAX_CRAWELED_PAGES &&!imageExtension(link)&& RobotsAllow(link))
 			
 			if (!linkesReferMe.containsKey(link)) {
 				try {
+					
 					// 2. Fetch the HTML code
 					Document document = Jsoup.connect(link).get();
 					String docContent = document.toString();
@@ -143,6 +159,7 @@ public class Crawlerr {
 		String rootUrl = splittedUrl[0] + "//" + splittedUrl[2];
 		String robots = splittedUrl[0] + "//" + splittedUrl[2] + "/robots.txt";
 
+		
 		if (robotsMap.containsKey(robots)) {
 			
 			boolean allowed = true;
@@ -262,30 +279,44 @@ public class Crawlerr {
 		}
 	}
 
-	public void crawl(int seedsPerThread)
-	{
-		
-		for (Map.Entry<String, ArrayList<String>> entry : seeds.entrySet()) {
-			
-			if (entry.getValue().get(1).equals("notvisited") && linkesReferMe.size() < MAX_CRAWELED_PAGES) {
-				
-				getPageLinks(1, entry.getValue().get(0), entry.getKey(), "");
-
-			}
-			
-		}
-	}
 	
 	class CrawlerRunnable implements Runnable {
 		private Crawlerr crawler;
 		private int seedsPerThread;
-		public CrawlerRunnable (Crawlerr c,int n) {
+		private int id;
+		private int extra;
+		
+		
+		public CrawlerRunnable (Crawlerr c,int n,int mid ,int extraN) {
 			this.crawler = c;
 			this.seedsPerThread=n;
+			this.id=mid;
+			this.extra=extraN;
+			
 		}
 
 		public void run () {
-				crawler.crawl(seedsPerThread);
+			int ptr=1;
+			
+			int end=seedsPerThread*id;
+			int begin=end-seedsPerThread+1;
+			end+=extra;
+			System.out.println(id);
+			for (Map.Entry<String, ArrayList<String>> entry : seeds.entrySet()) {
+				if(ptr>=begin&&ptr<=end)
+				{
+					System.out.println("--------------------------------");
+					System.out.println(id);
+					System.out.println("--------------------------------");
+					if (entry.getValue().get(1).equals("notvisited") && linkesReferMe.size() < MAX_CRAWELED_PAGES) {
+					
+						getPageLinks(1, entry.getValue().get(0), entry.getKey(), "");
+
+					}
+				}
+				ptr+=1;
+				
+			}
 		}
 	}
 	
@@ -301,15 +332,32 @@ public class Crawlerr {
 		int seedsSize=crawler1.seeds.size();
 		
 		int seedsPerThread=seedsSize/threadsNum;
-		for(int i=0;i<threadsNum;i++)
+		int extraSeeds=seedsSize%threadsNum;
+		
+		
+		if (threadsNum>seedsSize)
 		{
-			Thread t = new Thread (crawler1.new CrawlerRunnable(crawler1,seedsPerThread));
-			t.setName(""+i);
+			extraSeeds=0;
+			threadsNum=seedsSize;
+			seedsPerThread=1;
+		}
+		ArrayList<Thread>threads=new ArrayList<Thread>();
+		for(int i=1;i<=threadsNum;i++)
+		{
+			int extra =0;
+			if(i==threadsNum)
+				extra=extraSeeds;
+			System.out.println("create thread");
+			Thread t = new Thread (crawler1.new CrawlerRunnable(crawler1,seedsPerThread,i,extra));
 			t.start(); 
-			t.join();
+			threads.add(t);
+			
 		}
 		
-		
+		for(int i=0;i<threads.size();i++)
+		{
+			threads.get(i).join();;
+		}
 		
 		
 
