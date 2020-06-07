@@ -1,6 +1,7 @@
-package crawling;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -98,8 +99,14 @@ public class QueryProcessor {
 	// this method runs the ranker to rank all links and return 10 the number of links
 	public Map<Integer, ArrayList<String >> runQueryProcessor(String searchQuery,int index) throws IOException{
 		boolean isPhrase = isPhraseSearch(searchQuery);
+		if(isPhrase)
+		{
+			searchQuery=searchQuery.substring(1, searchQuery.length()-1);
+		}
 		this.query = splitAndStam(searchQuery);
 		getDocuments();
+		System.out.println( this.wordsDictionary);
+		
 		PhraseSearch ps = new PhraseSearch(searchQuery, this.query, this.wordsDictionary);
 		List<Integer> indicesPhrase = new ArrayList();
 		Map<Integer, ArrayList<String >> TenLinksWithNum=new HashMap<Integer, ArrayList<String >>();
@@ -107,7 +114,7 @@ public class QueryProcessor {
 		if(isPhrase) {
 			indicesPhrase = (List<Integer>) ps.search();
 			if (indicesPhrase.isEmpty())      //if phrase search but no result
-				return 0;
+				return TenLinksWithNum;
 		}
 		List<Integer> rankedIndicies = runRanker(isPhrase, indicesPhrase);
 		ArrayList<String> rankedURLs = new ArrayList<String>();
@@ -128,7 +135,7 @@ public class QueryProcessor {
 		ArrayList<String >TenLinks=new ArrayList<String >();
 		for(int i=index*10-10;i<index*10;i++)
 		{
-			if (i < URLsSize)
+			if (i >= URLsSize)
 				break;
 			TenLinks.add(rankedURLs.get(i));
 		}
@@ -197,6 +204,7 @@ public class QueryProcessor {
 		List<Integer> rankedIndicies;
 		Relevance r = new Relevance();
 		rankedIndicies = r.ranker(this.wordsDictionary, indicesPhrase); //edit this
+		Collections.reverse(rankedIndicies);
 		return rankedIndicies;
 		
 	}
@@ -204,7 +212,7 @@ public class QueryProcessor {
 	public static void main(String[] args) throws IOException {
 		
 		QueryProcessor q=new QueryProcessor();
-		q.runQueryProcessor("sql");
+		System.out.println(q.runQueryProcessor("-binary search-",1));
 		
 	}
 }

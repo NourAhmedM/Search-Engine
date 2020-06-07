@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,53 +24,53 @@ public class PhraseSearch {
 	//====================================================================================================
 	//-------------------------------------- database methods --------------------------------------------
 	//====================================================================================================
-//	public Map<Integer, String> readLinksWithIndecies()
-//	{
-//		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
-//		DBManager db = DBManager.getinstance();
-//		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
-//		Iterator<DBObject> objects = seedsCollection.find().iterator();
-//		while (objects.hasNext()) {
-//			Map onelink = objects.next().toMap();
-//	
-//			String link = (String) onelink.get("link");
-//			int index = (Integer) onelink.get("index");
-//	
-//			documentsURLs.put(index, link);
-//	
-//		}
-//		return documentsURLs;
-//	}
-//	
-//	public Map<String, wordValue> readWordsDic()
-//	{
-//		Map<String, wordValue> wordsDictionary=new LinkedHashMap<String, wordValue>();
-//		
-//		DBManager db = DBManager.getinstance();
-//		DBCollection seedsCollection = db.getwordsDictionary().getCollection();
-//		Iterator<DBObject> objects = seedsCollection.find().iterator();
-//		while (objects.hasNext()) {
-//			Map oneword = objects.next().toMap();
-//	
-//			String word = (String) oneword.get("word");
-//			
-//			double idfd = (double) oneword.get("idf");
-//			double idf=(double)idfd;
-//			ArrayList<Integer>linksIndecies=(ArrayList<Integer>)oneword.get("linksIndecies");
-//			ArrayList<List<Double>>listCorespondsToIndecies=(ArrayList<List<Double>>)oneword.get("listCorespondsToIndecies");
-//	
-//			Map<Integer, List<Double> >wordVaueMap=new LinkedHashMap<Integer, List<Double> >();
-//			for(int i=0;i<linksIndecies.size();i++)
-//			{
-//				wordVaueMap.put(linksIndecies.get(i), listCorespondsToIndecies.get(i));
-//				
-//			}
-//			wordValue wordvlaue=new wordValue(idf,wordVaueMap);
-//			wordsDictionary.put(word, wordvlaue);
-//	
-//		}
-//		return wordsDictionary;
-//	}
+	public Map<Integer, String> readLinksWithIndecies()
+	{
+		Map<Integer, String> documentsURLs= new LinkedHashMap<Integer, String>();
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getdocumentsURLs().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map onelink = objects.next().toMap();
+	
+			String link = (String) onelink.get("link");
+			int index = (Integer) onelink.get("index");
+	
+			documentsURLs.put(index, link);
+	
+		}
+		return documentsURLs;
+	}
+	
+	public Map<String, wordValue> readWordsDic()
+	{
+		Map<String, wordValue> wordsDictionary=new LinkedHashMap<String, wordValue>();
+		
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getwordsDictionary().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map oneword = objects.next().toMap();
+	
+			String word = (String) oneword.get("word");
+			
+			double idfd = (double) oneword.get("idf");
+			double idf=(double)idfd;
+			ArrayList<Integer>linksIndecies=(ArrayList<Integer>)oneword.get("linksIndecies");
+			ArrayList<List<Double>>listCorespondsToIndecies=(ArrayList<List<Double>>)oneword.get("listCorespondsToIndecies");
+	
+			Map<Integer, List<Double> >wordVaueMap=new LinkedHashMap<Integer, List<Double> >();
+			for(int i=0;i<linksIndecies.size();i++)
+			{
+				wordVaueMap.put(linksIndecies.get(i), listCorespondsToIndecies.get(i));
+				
+			}
+			wordValue wordvlaue=new wordValue(idf,wordVaueMap);
+			wordsDictionary.put(word, wordvlaue);
+	
+		}
+		return wordsDictionary;
+	}
 	
 	//====================================================================================================
 	//-------------------------------------- the constructor ---------------------------------------------
@@ -78,8 +79,10 @@ public class PhraseSearch {
 		this.query = query;
 		this.stemmedQuery = stemmedQuery;
 		this.wordsDictionary = wordsDictionary;
-//		this.documentsURLs = readLinksWithIndecies();
-//    	this.allWordsDictionary = readWordsDic();
+		this.documentsURLs = readLinksWithIndecies();
+		System.out.println(stemmedQuery);
+		System.out.println(wordsDictionary);
+    	//this.allWordsDictionary = readWordsDic();
 	}
 	
 	//====================================================================================================
@@ -89,6 +92,7 @@ public class PhraseSearch {
 		String[] words = split();
 		List<Integer> indices = new ArrayList();
 		if (isResultExists()) {
+			System.out.println("nouuuuuuuuuuuuuuuur");
 			indices = stringMatch();
 		}
 		return indices;
@@ -108,8 +112,11 @@ public class PhraseSearch {
 	//====================================================================================================
 	// if the size of stemmed query = size of the word dictionary then all words are in the database
 	public boolean isResultExists() {
+		
 		int querySize = stemmedQuery.size();
 		int dictionarySize = this.wordsDictionary.size();
+		System.out.println(stemmedQuery);
+		System.out.println(wordsDictionary);
 		if(querySize != dictionarySize)
 			return false;
 		return true;
@@ -190,7 +197,7 @@ public class PhraseSearch {
 				URL = documentsURLs.get(indicies.get(i));  // getting the URLs corresponding to the indices
 				urlContent = getBody(URL);                 // getting the body of the corresponding URL
 				
-				if(urlContent.matches("(.*)"+query+"(.*)")) // if the phrase in the body of the url then add the index of the URL
+				if(urlContent.contains(query)) // if the phrase in the body of the url then add the index of the URL
 				{
 					tempIndices.add(indicies.get(i));
 				}
@@ -214,3 +221,4 @@ public class PhraseSearch {
 		
 	}
 }
+
