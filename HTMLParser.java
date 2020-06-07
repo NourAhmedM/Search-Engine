@@ -41,9 +41,15 @@ public class HTMLParser{
             fullText = remover.setup(fullText);
             title = doc.title();
             title = remover.setup(title);
-            header1 = doc.body().getElementsByTag("h1").text();
+            if(doc.body()!=null)
+            	header1 = doc.body().getElementsByTag("h1").text();
+            else
+            	header1="";
             header1 = remover.setup(header1);
-            body = doc.body().text();
+            if(doc.body()!=null)
+            	body = doc.body().text();
+            else
+            	body="";
             body = remover.setup(body);
 
         } catch (IOException e) {

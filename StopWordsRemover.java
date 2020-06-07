@@ -1,6 +1,6 @@
 
 //import org.openjdk.jmh.annotations.*;
-package crawling;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -25,7 +25,7 @@ public final class StopWordsRemover {
     	data = s;
         data = data.toLowerCase();
         data = data.replaceAll("\\p{Punct}", "");
-        stopwords = Files.readAllLines(Paths.get("./assets/stopwords.txt"));
+        stopwords = Files.readAllLines(Paths.get("/home/nourahmed/apache-tomcat-9.0.34/webapps/ROOT/WEB-INF/classes/assets/stopwords.txt"));
         stopwordsRegex = stopwords.stream().collect(Collectors.joining("|", "\\b(", ")\\b\\s?"));
         String result  = removeAll();
         return result;
