@@ -18,7 +18,9 @@ public class PageRank {
  public static int size;
  public Map<Integer, String> documentsURLs;
  
- 
+//====================================================================================================
+//------------------------------ get the links and the refere links ----------------------------------
+//====================================================================================================
  public static Map<String, ArrayList<String>> dumDataURLs() {
 	 HashMap<String,ArrayList<String>>LinksAndRefers=new HashMap<String,ArrayList<String>>();
 		DBManager db = DBManager.getinstance();
@@ -50,6 +52,10 @@ public class PageRank {
 		}
 		return documentsURLs;
  }
+
+//====================================================================================================
+//--------------------------------------- the constructor --------------------------------------------
+//====================================================================================================
  public PageRank(Map<String, ArrayList<String>> URLs, Map<Integer, String> documentsURLs){
 	 this.documentsURLs = documentsURLs;
 	 size = documentsURLs.size();
@@ -57,24 +63,9 @@ public class PageRank {
 	 fillGraph(URLs, documentsURLs);
  }
  
- //uncomment this function
- 
-// public static HashMap<String,ArrayList<String>> readLinks() {
-//		HashMap<String,ArrayList<String>>LinksAndRefers=new HashMap<String,ArrayList<String>>();
-//		DBManager db = DBManager.getinstance();
-//		DBCollection seedsCollection = db.getLinksAndRefers().getCollection();
-//		Iterator<DBObject> objects = seedsCollection.find().iterator();
-//		while (objects.hasNext()) {
-//			Map oneLink = objects.next().toMap();
-//
-//			String link = (String) oneLink.get("link");
-//			ArrayList<String> cont_visit = (ArrayList<String>) oneLink.get("refers");
-//
-//			LinksAndRefers.put(link, cont_visit);
-//		}
-//		return LinksAndRefers;
-//	}
- 
+//====================================================================================================
+//----------------------------- swapping the url link and its index ----------------------------------
+//====================================================================================================
  // this function swap the key and the value for the map
  static Map<String, Integer> swapKeyValue(Map<Integer, String> documentsURLs){
 	Map<String, Integer> documentsIndices = new LinkedHashMap<String, Integer>();
@@ -84,7 +75,10 @@ public class PageRank {
 	
 	return documentsIndices;
  }
- 
+
+//====================================================================================================
+//-------------------------------------- building the graph ------------------------------------------
+//====================================================================================================
  // this function fills the graph with numbers corresponding to the URLs
  static void fillGraph(Map<String, ArrayList<String>> URLs, Map<Integer, String> documentsURLs) {
 	 Map<String, Integer> documentsIndices = swapKeyValue(documentsURLs);
@@ -98,7 +92,9 @@ public class PageRank {
 	 }
  }
 
-
+//====================================================================================================
+//----------------------------------- normalize the rank values --------------------------------------
+//====================================================================================================
 static void normalize(double[] rank) {   
 	 double sum = 0;
 	 for(int i = 0; i < rank.length; i++)
@@ -108,14 +104,16 @@ static void normalize(double[] rank) {
 		 rank[i] /= sum;
  }
  
+ 	//====================================================================================================
+	//------------------------------------------ main method ---------------------------------------------
+	//====================================================================================================
  public static void main(String[] args) {
-//	 HashMap<String,ArrayList<String>> urls = readLinks(); //getting the urls and the refered urls from the database
 	 Map<String, ArrayList<String>> URLs = new HashMap<String, ArrayList<String>>();
 	 Map<Integer, String> documentsURLs = new HashMap<Integer, String>();
-	 //----------------------- dum data ----------------------------------------
+
 	 documentsURLs = dumDataDocument();
 	 URLs = dumDataURLs();
-	//----------------------- dum data ----------------------------------------
+
 	 Map<String , Double> pagesRank = new HashMap<String , Double>();
 	 
 	 PageRank p = new PageRank(URLs, documentsURLs);
@@ -164,10 +162,7 @@ static void normalize(double[] rank) {
 					 pr = pr + (rank0[k]/L[k]);
 				 }
 			 }
-//			 rank1[j] = pr;
 			 rank1[j] = (1-lampda)+lampda*pr;
-//			 rank1[j] = (1-lampda)*rank0[j]+lampda*pr;
-//				 System.out.println(rank1[j]);
 		 }
 			 normalize(rank1);
 		 rank0 = rank1;
@@ -179,7 +174,7 @@ static void normalize(double[] rank) {
 			 pagesRank.put(p.documentsURLs.get(j), rank1[j]);
 	 }
 	 System.out.println(pagesRank);
-//	 savePagesRank(pagesRank);
+
 	 DBManager db = DBManager.getinstance();
 	 db.savePagesRank(pagesRank);
 	 
