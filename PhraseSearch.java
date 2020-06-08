@@ -18,6 +18,7 @@ public class PhraseSearch {
 	public String query;
 	public List<String> stemmedQuery;
 	public Map<String, wordValue> wordsDictionary;
+//	public Map<String, wordValue> allWordsDictionary;
 	public Map<Integer, String> documentsURLs;
 	
 	//====================================================================================================
@@ -41,6 +42,36 @@ public class PhraseSearch {
 		return documentsURLs;
 	}
 	
+	public Map<String, wordValue> readWordsDic()
+	{
+		Map<String, wordValue> wordsDictionary=new LinkedHashMap<String, wordValue>();
+		
+		DBManager db = DBManager.getinstance();
+		DBCollection seedsCollection = db.getwordsDictionary().getCollection();
+		Iterator<DBObject> objects = seedsCollection.find().iterator();
+		while (objects.hasNext()) {
+			Map oneword = objects.next().toMap();
+	
+			String word = (String) oneword.get("word");
+			
+			double idfd = (double) oneword.get("idf");
+			double idf=(double)idfd;
+			ArrayList<Integer>linksIndecies=(ArrayList<Integer>)oneword.get("linksIndecies");
+			ArrayList<List<Double>>listCorespondsToIndecies=(ArrayList<List<Double>>)oneword.get("listCorespondsToIndecies");
+	
+			Map<Integer, List<Double> >wordVaueMap=new LinkedHashMap<Integer, List<Double> >();
+			for(int i=0;i<linksIndecies.size();i++)
+			{
+				wordVaueMap.put(linksIndecies.get(i), listCorespondsToIndecies.get(i));
+				
+			}
+			wordValue wordvlaue=new wordValue(idf,wordVaueMap);
+			wordsDictionary.put(word, wordvlaue);
+	
+		}
+		return wordsDictionary;
+	}
+	
 	//====================================================================================================
 	//-------------------------------------- the constructor ---------------------------------------------
 	//====================================================================================================
@@ -58,11 +89,22 @@ public class PhraseSearch {
 	//-------------------------------------- the main method ---------------------------------------------
 	//====================================================================================================
 	public List<Integer> search() {
+		String[] words = split();
 		List<Integer> indices = new ArrayList();
 		if (isResultExists()) {
+			System.out.println("nouuuuuuuuuuuuuuuur");
 			indices = stringMatch();
 		}
 		return indices;
+	}
+	
+	//====================================================================================================
+	//-------------------------------- split the query into words ----------------------------------------
+	//====================================================================================================
+	public String[] split(){
+		String[] words;
+		words = query.split(" ");
+		return words;
 	}
 	
 	//====================================================================================================

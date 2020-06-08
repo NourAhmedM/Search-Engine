@@ -1,4 +1,4 @@
-package crawling;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class Crawlerr {
 	// links ,["Disalloewed or allowed , link to match with"]
 	private HashMap<String, ArrayList<ArrayList<String>>> robotsMap;
 
-	private static final int MAX_CRAWELED_PAGES = 1000;
+	private static final int MAX_CRAWELED_PAGES = 5000;
 
 	public Crawlerr() {
 		seeds = new HashMap<String, ArrayList<String>>();
