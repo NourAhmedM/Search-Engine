@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="15dp"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/search_title"
+        android:text="computer archetecture"
+        android:textColor="#2E86C1"
+        android:textSize="17dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/url"
+        android:text="https://www.wikipidia.com/blabla"
+        android:textColor="#27AE60"
+        android:textSize="15dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/content_snippet"
+        android:text="nour ahmed mahmoud feels that everything is bad in this life "
+        android:textColor="#808B96"
+        android:textSize="10dp"/>
+
+
+</LinearLayout>
